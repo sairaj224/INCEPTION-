@@ -1,0 +1,6 @@
+{
+  "name": "Inception",
+  "description": "AI-Powered Smart BOM & IoT Learning Assistant for Engineering Students & Faculty",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

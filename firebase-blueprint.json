@@ -1,0 +1,21 @@
+{
+  "entities": {
+    "products": {
+      "title": "Products",
+      "description": "Hardware store product inventory",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "domain": { "type": "string" },
+        "category": { "type": "string" },
+        "price": { "type": "number" },
+        "mrp": { "type": "number" },
+        "rating": { "type": "number" },
+        "reviews": { "type": "number" },
+        "stock": { "type": "number" },
+        "image": { "type": "string" },
+        "shortDescription": { "type": "string" }
+      }
+    }
+  }
+}
