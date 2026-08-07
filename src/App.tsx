@@ -780,6 +780,7 @@ export default function App() {
               onAddBomToCart={handleAddBomToCart}
               isWatched={watchlistProjectIds.has(selectedProject.id)}
               onToggleWatchlist={handleToggleWatchlistProject}
+              onChangePhoto={isAdminAuthenticated ? (projId, newPhotoUrl) => handleChangeProjectPhoto(projId, newPhotoUrl) : undefined}
             />
           ) : activeTab === 'projects' ? (
             /* Projects Directory View */
@@ -909,7 +910,7 @@ export default function App() {
                       ownedProductsCount={ownedCount}
                       isWatched={watchlistProjectIds.has(proj.id)}
                       onToggleWatchlist={handleToggleWatchlistProject}
-                      onChangePhoto={(projId, newPhotoUrl) => handleChangeProjectPhoto(projId, newPhotoUrl)}
+                      onChangePhoto={isAdminAuthenticated ? (projId, newPhotoUrl) => handleChangeProjectPhoto(projId, newPhotoUrl) : undefined}
                     />
                   );
                 })}

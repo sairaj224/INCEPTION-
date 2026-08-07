@@ -158,7 +158,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                     {p.category}
                   </span>
 
-                  {onUpdateProduct && (
+                  {userRole === 'owner' && onUpdateProduct && (
                     <button
                       type="button"
                       onClick={() => setTargetImageProduct(p)}
