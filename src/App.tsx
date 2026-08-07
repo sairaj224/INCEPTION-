@@ -30,6 +30,7 @@ import { subscribeToProducts, syncAllProductsToFirestore, seedProductsToFirestor
 import { Search, Sparkles, Filter, IndianRupee, Cpu, ShieldAlert, User, LogIn, UserCheck } from 'lucide-react';
 
 const PRODUCTS_STORAGE_KEY = 'inception_college_products';
+const PROJECTS_STORAGE_KEY = 'inception_college_projects';
 const PROFILE_STORAGE_KEY = 'inception_user_profile';
 const ORDERS_STORAGE_KEY = 'inception_orders_list';
 const WATCHLIST_PROJECTS_KEY = 'inception_watchlist_projects';
@@ -102,6 +103,22 @@ export default function App() {
       console.error('Failed to load saved products', e);
     }
     return MOCK_PRODUCTS;
+  });
+
+  // Dynamic Project Ideas State with localStorage persistence
+  const [projects, setProjects] = useState<Project[]>(() => {
+    try {
+      const saved = localStorage.getItem(PROJECTS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load saved projects', e);
+    }
+    return MOCK_PROJECTS;
   });
 
   // User Profile State with localStorage persistence
@@ -414,6 +431,52 @@ export default function App() {
     }
   };
 
+  // Helper to persist project ideas to state & localStorage safely
+  const updateAndPersistProjects = (newProjects: Project[]) => {
+    setProjects(newProjects);
+    try {
+      localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(newProjects));
+    } catch (e) {
+      console.warn('LocalStorage quota limit reached when persisting projects.', e);
+    }
+  };
+
+  const handleUpdateProject = (updated: Project) => {
+    const next = projects.map((p) => (p.id === updated.id ? updated : p));
+    updateAndPersistProjects(next);
+    if (selectedProject?.id === updated.id) {
+      setSelectedProject(updated);
+    }
+  };
+
+  const handleAddProject = (newProj: Project) => {
+    const next = [newProj, ...projects];
+    updateAndPersistProjects(next);
+  };
+
+  const handleDeleteProject = (projId: string) => {
+    const next = projects.filter((p) => p.id !== projId);
+    updateAndPersistProjects(next);
+    if (selectedProject?.id === projId) {
+      setSelectedProject(null);
+    }
+  };
+
+  const handleResetProjects = () => {
+    updateAndPersistProjects(MOCK_PROJECTS);
+    localStorage.removeItem(PROJECTS_STORAGE_KEY);
+  };
+
+  const handleChangeProjectPhoto = (projectId: string, newPhotoUrl: string) => {
+    const next = projects.map((p) =>
+      p.id === projectId ? { ...p, heroImage: newPhotoUrl } : p
+    );
+    updateAndPersistProjects(next);
+    if (selectedProject?.id === projectId) {
+      setSelectedProject((prev) => (prev ? { ...prev, heroImage: newPhotoUrl } : null));
+    }
+  };
+
   // Helper to persist profile
   const handleUpdateProfile = (updatedProfile: UserProfile) => {
     setUserProfile(updatedProfile);
@@ -567,7 +630,7 @@ export default function App() {
   // Handle AI Recommendation Selection
   const handleSelectRecommendedProject = (rec: AIRecommendation) => {
     const recTitle = (rec.title || '').toLowerCase();
-    const matched = MOCK_PROJECTS.find(
+    const matched = projects.find(
       (p) => {
         const pTitle = (p.title || '').toLowerCase();
         return pTitle.includes(recTitle) || recTitle.includes(pTitle);
@@ -594,10 +657,10 @@ export default function App() {
           { productId: 'prod-breadboard', quantity: 1 },
           { productId: 'prod-jumpers', quantity: 1 },
         ],
-        quiz: MOCK_PROJECTS[0].quiz,
-        pinoutTable: MOCK_PROJECTS[0].pinoutTable,
-        codeSnippet: MOCK_PROJECTS[0].codeSnippet,
-        simulationConfig: MOCK_PROJECTS[0].simulationConfig,
+        quiz: projects[0]?.quiz || MOCK_PROJECTS[0].quiz,
+        pinoutTable: projects[0]?.pinoutTable || MOCK_PROJECTS[0].pinoutTable,
+        codeSnippet: projects[0]?.codeSnippet || MOCK_PROJECTS[0].codeSnippet,
+        simulationConfig: projects[0]?.simulationConfig || MOCK_PROJECTS[0].simulationConfig,
         facultyApproved: true,
         instructorName: 'Inception AI Guide',
         eWasteScore: { reusablePercent: 92, recyclablePackaging: true, carbonFootprint: 'Low' },
@@ -607,7 +670,7 @@ export default function App() {
   };
 
   // Filter Projects
-  const filteredProjects = MOCK_PROJECTS.filter((proj) => {
+  const filteredProjects = projects.filter((proj) => {
     const q = (searchQuery || '').toLowerCase();
     const matchesSearch =
       (proj.title || '').toLowerCase().includes(q) ||
@@ -621,7 +684,7 @@ export default function App() {
   const cartTotalCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   return (
-    <div className={`min-h-screen font-sans antialiased flex flex-col justify-between selection:bg-blue-500 selection:text-white transition-colors duration-300 ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
+    <div className={`min-h-screen w-full max-w-full overflow-x-hidden font-sans antialiased flex flex-col justify-between selection:bg-blue-500 selection:text-white transition-colors duration-300 ${theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
       <div>
         {/* App Navigation Header */}
         <Header
@@ -738,10 +801,10 @@ export default function App() {
                     Recommend projects by budget, deduct components you already own, customize BOMs with AI, and test live circuit simulations before ordering.
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 pt-2">
                     <button
                       onClick={() => setIsFinderOpen(true)}
-                      className="flex items-center space-x-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm shadow-sm transition-all transform active:scale-95"
+                      className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs sm:text-sm shadow-md transition-all transform active:scale-95"
                     >
                       <Sparkles className="w-4 h-4 text-blue-200 fill-blue-200" />
                       <span>"I Don't Know What to Build" AI Flow</span>
@@ -749,7 +812,7 @@ export default function App() {
 
                     <button
                       onClick={() => setIsSubOpen(true)}
-                      className="px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-xs transition-all"
+                      className="w-full sm:w-auto text-center px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-xs transition-all"
                     >
                       Verify College ID (.edu) for 10% Off
                     </button>
@@ -846,6 +909,7 @@ export default function App() {
                       ownedProductsCount={ownedCount}
                       isWatched={watchlistProjectIds.has(proj.id)}
                       onToggleWatchlist={handleToggleWatchlistProject}
+                      onChangePhoto={(projId, newPhotoUrl) => handleChangeProjectPhoto(projId, newPhotoUrl)}
                     />
                   );
                 })}
@@ -1004,6 +1068,10 @@ export default function App() {
         onUpdateOrderStatus={handleUpdateOrderStatus}
         onDeleteOrder={handleDeleteOrder}
         onAdminLogout={handleAdminLogout}
+        projects={projects}
+        onUpdateProject={handleUpdateProject}
+        onAddProject={handleAddProject}
+        onDeleteProject={handleDeleteProject}
       />
 
       {/* Buyer Account & College Profile Modal */}
@@ -1054,15 +1122,15 @@ export default function App() {
       />
 
       {/* Bottom Right Floating AI Finder Button & Speech Bubble */}
-      <div className="fixed right-5 bottom-5 z-50 flex flex-col items-end group">
+      <div className="fixed right-3 bottom-3 sm:right-5 sm:bottom-5 z-50 flex flex-col items-end group max-w-[calc(100vw-1.5rem)]">
         {/* Message Speech Bubble Popup */}
         <div
           onClick={() => setIsFinderOpen(true)}
-          className="mb-1.5 whitespace-nowrap bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-xl shadow-lg border border-cyan-300/60 cursor-pointer animate-bounce hover:scale-105 transition-all flex items-center space-x-1.5 relative z-50"
+          className="mb-1.5 max-w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-xl shadow-lg border border-cyan-300/60 cursor-pointer animate-bounce hover:scale-105 transition-all flex items-center space-x-1.5 relative z-50"
           title="Got ideas? Explore them here!"
         >
           <Sparkles className="w-3 h-3 text-cyan-200 fill-cyan-200 animate-pulse shrink-0" />
-          <span>Got ideas? Explore them here!</span>
+          <span className="truncate">Got ideas? Explore them here!</span>
           {/* Speech Bubble Arrow Tail */}
           <div className="absolute -bottom-1 right-5 w-2 h-2 bg-indigo-600 rotate-45 border-r border-b border-cyan-300/60"></div>
         </div>

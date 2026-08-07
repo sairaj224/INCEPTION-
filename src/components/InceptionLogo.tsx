@@ -16,25 +16,25 @@ export const InceptionLogo: React.FC<InceptionLogoProps> = ({
   // Height options for the graphic symbol
   const sizeClasses = {
     sm: 'h-6 sm:h-7',
-    md: 'h-8 sm:h-9',
-    lg: 'h-12 sm:h-14 lg:h-16',
-    xl: 'h-16 sm:h-20 lg:h-24',
+    md: 'h-7 sm:h-8',
+    lg: 'h-8 sm:h-11 lg:h-14',
+    xl: 'h-11 sm:h-18 lg:h-22',
   }[size];
 
   // Font size options for the title
   const titleClasses = {
-    sm: 'text-base sm:text-lg',
-    md: 'text-xl sm:text-2xl',
-    lg: 'text-2xl sm:text-3xl lg:text-4xl',
-    xl: 'text-3xl sm:text-4xl lg:text-5xl',
+    sm: 'text-sm sm:text-lg',
+    md: 'text-base sm:text-xl',
+    lg: 'text-base sm:text-2xl lg:text-3xl',
+    xl: 'text-xl sm:text-3xl lg:text-4xl',
   }[size];
 
   // Stylized E bar height options
   const eBarClasses = {
-    sm: 'h-[14px] w-[10px]',
-    md: 'h-[16px] w-[12px]',
-    lg: 'h-[20px] sm:h-[24px] lg:h-[28px] w-[14px] sm:w-[16px] lg:w-[18px]',
-    xl: 'h-[26px] sm:h-[30px] lg:h-[34px] w-[18px] sm:w-[20px] lg:w-[22px]',
+    sm: 'h-[12px] w-[8px]',
+    md: 'h-[14px] w-[10px]',
+    lg: 'h-[14px] sm:h-[20px] lg:h-[24px] w-[10px] sm:w-[14px] lg:w-[16px]',
+    xl: 'h-[20px] sm:h-[26px] lg:h-[30px] w-[14px] sm:w-[18px] lg:w-[20px]',
   }[size];
 
   return (

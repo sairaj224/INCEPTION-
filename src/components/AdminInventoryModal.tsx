@@ -3,6 +3,7 @@ import { validateAndProcessFileUpload } from '../lib/fileUpload';
 import { ImageChangeModal } from './ImageChangeModal';
 import {
   Product,
+  Project,
   PlacedOrder,
   OrderStatus,
   Coupon,
@@ -52,7 +53,8 @@ import {
   ChevronRight,
   Send,
   HelpCircle,
-  ShieldAlert
+  ShieldAlert,
+  Sparkles
 } from 'lucide-react';
 
 interface AdminInventoryModalProps {
@@ -67,6 +69,10 @@ interface AdminInventoryModalProps {
   onUpdateOrderStatus: (orderId: string, newStatus: OrderStatus, notes?: string) => void;
   onDeleteOrder: (orderId: string) => void;
   onAdminLogout?: () => void;
+  projects?: Project[];
+  onUpdateProject?: (updated: Project) => void;
+  onAddProject?: (newProj: Project) => void;
+  onDeleteProject?: (projId: string) => void;
 }
 
 // Initial Mock Coupons
@@ -216,11 +222,39 @@ export const AdminInventoryModal: React.FC<AdminInventoryModalProps> = ({
   onUpdateOrderStatus,
   onDeleteOrder,
   onAdminLogout,
+  projects = [],
+  onUpdateProject,
+  onAddProject,
+  onDeleteProject,
 }) => {
   // Navigation Active Tab
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'products' | 'inventory' | 'categories' | 'orders' | 'customers' | 'returns' | 'coupons' | 'banners' | 'reviews'
+    'overview' | 'products' | 'inventory' | 'categories' | 'orders' | 'customers' | 'returns' | 'coupons' | 'banners' | 'reviews' | 'project_ideas'
   >('overview');
+
+  // Project Ideas Edit & Create State
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [editProjTitle, setEditProjTitle] = useState<string>('');
+  const [editProjSubtitle, setEditProjSubtitle] = useState<string>('');
+  const [editProjDifficulty, setEditProjDifficulty] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Beginner');
+  const [editProjHours, setEditProjHours] = useState<number>(2.5);
+  const [editProjBudget, setEditProjBudget] = useState<number>(850);
+  const [editProjDomain, setEditProjDomain] = useState<string>('Sensors');
+  const [editProjImage, setEditProjImage] = useState<string>('');
+  const [editProjDesc, setEditProjDesc] = useState<string>('');
+  const [editProjObjectives, setEditProjObjectives] = useState<string>('');
+
+  // New Project Idea Modal State
+  const [showAddProjectModal, setShowAddProjectModal] = useState<boolean>(false);
+  const [newProjTitle, setNewProjTitle] = useState<string>('');
+  const [newProjSubtitle, setNewProjSubtitle] = useState<string>('');
+  const [newProjDifficulty, setNewProjDifficulty] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Beginner');
+  const [newProjHours, setNewProjHours] = useState<number>(3);
+  const [newProjBudget, setNewProjBudget] = useState<number>(950);
+  const [newProjDomain, setNewProjDomain] = useState<string>('Sensors');
+  const [newProjImage, setNewProjImage] = useState<string>('https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80');
+  const [newProjDesc, setNewProjDesc] = useState<string>('');
+  const [newProjObjectives, setNewProjObjectives] = useState<string>('Master circuit assembly, Understand sensor signal processing');
 
   // Coupons State
   const [coupons, setCoupons] = useState<Coupon[]>(() => {
@@ -475,6 +509,96 @@ export const AdminInventoryModal: React.FC<AdminInventoryModalProps> = ({
     setShowAddForm(false);
   };
 
+  // Handlers for Project Idea Editing & Creation
+  const handleStartEditProject = (proj: Project) => {
+    setEditingProjectId(proj.id);
+    setEditProjTitle(proj.title);
+    setEditProjSubtitle(proj.subtitle);
+    setEditProjDifficulty(proj.difficulty);
+    setEditProjHours(proj.estimatedHours);
+    setEditProjBudget(proj.estimatedBudget);
+    setEditProjDomain(proj.domain);
+    setEditProjImage(proj.heroImage);
+    setEditProjDesc(proj.description);
+    setEditProjObjectives((proj.learningObjectives || []).join(', '));
+  };
+
+  const handleSaveEditProject = (proj: Project) => {
+    if (!onUpdateProject) return;
+    const objectivesArray = editProjObjectives
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    onUpdateProject({
+      ...proj,
+      title: editProjTitle.trim() || proj.title,
+      subtitle: editProjSubtitle.trim() || proj.subtitle,
+      difficulty: editProjDifficulty,
+      estimatedHours: editProjHours > 0 ? editProjHours : proj.estimatedHours,
+      estimatedBudget: editProjBudget >= 0 ? editProjBudget : proj.estimatedBudget,
+      domain: editProjDomain as any,
+      heroImage: editProjImage.trim() || proj.heroImage,
+      description: editProjDesc.trim() || proj.description,
+      learningObjectives: objectivesArray.length > 0 ? objectivesArray : proj.learningObjectives,
+    });
+    setEditingProjectId(null);
+  };
+
+  const handleCreateNewProject = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProjTitle.trim() || !onAddProject) return;
+
+    const objectivesArray = newProjObjectives
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const newProj: Project = {
+      id: 'proj-custom-' + Date.now(),
+      title: newProjTitle.trim(),
+      subtitle: newProjSubtitle.trim() || newProjTitle.trim(),
+      difficulty: newProjDifficulty,
+      estimatedHours: Number(newProjHours) || 2.5,
+      estimatedBudget: Number(newProjBudget) || 950,
+      domain: newProjDomain as any,
+      heroImage: newProjImage.trim() || 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
+      description: newProjDesc.trim() || 'Custom engineering project idea added by admin.',
+      learningObjectives: objectivesArray.length > 0 ? objectivesArray : ['Master hardware integration', 'Understand system logic'],
+      bom: [
+        { productId: products[0]?.id || 'prod-esp32', quantity: 1 },
+        { productId: products[1]?.id || 'prod-breadboard', quantity: 1 },
+      ],
+      quiz: projects[0]?.quiz || [],
+      pinoutTable: projects[0]?.pinoutTable || [],
+      codeSnippet: projects[0]?.codeSnippet || {
+        language: 'cpp',
+        filename: 'main.ino',
+        code: '// Arduino / ESP32 Code\nvoid setup() {\n  Serial.begin(115200);\n}\nvoid loop() {\n  delay(1000);\n}',
+        explanation: 'Starter firmware sketch provided for testing.',
+      },
+      simulationConfig: projects[0]?.simulationConfig || {
+        inputs: [],
+        outputs: [],
+        initialLogs: ['System booted successfully.'],
+        simulationCode: () => ({ outputsState: {}, logMessage: 'Running' }),
+      },
+      facultyApproved: true,
+      instructorName: 'Faculty Administrator',
+      eWasteScore: {
+        reusablePercent: 90,
+        recyclablePackaging: true,
+        carbonFootprint: 'Low',
+      },
+    };
+
+    onAddProject(newProj);
+    setNewProjTitle('');
+    setNewProjSubtitle('');
+    setNewProjDesc('');
+    setShowAddProjectModal(false);
+  };
+
   // Add Category Handler
   const handleAddCategory = (e: React.FormEvent) => {
     e.preventDefault();
@@ -693,6 +817,18 @@ export const AdminInventoryModal: React.FC<AdminInventoryModalProps> = ({
           >
             <Package className="w-4 h-4" />
             <span>Catalog Products ({products.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('project_ideas')}
+            className={`py-2.5 px-3.5 font-bold border-b-2 transition-all flex items-center space-x-1.5 whitespace-nowrap ${
+              activeTab === 'project_ideas'
+                ? 'border-amber-500 text-amber-400 bg-amber-500/10 rounded-t-lg'
+                : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-t-lg'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span>Project Ideas ({projects.length})</span>
           </button>
 
           <button
@@ -2390,6 +2526,394 @@ export const AdminInventoryModal: React.FC<AdminInventoryModalProps> = ({
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* ==================== TAB 11: PROJECT IDEAS & BOM KITS MANAGEMENT ==================== */}
+          {activeTab === 'project_ideas' && (
+            <div className="space-y-4">
+              {/* Header Bar with Stats and Add Button */}
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-800/80 p-4 rounded-2xl border border-slate-700">
+                <div>
+                  <h3 className="text-base font-extrabold text-white flex items-center space-x-2">
+                    <Sparkles className="w-5 h-5 text-amber-400" />
+                    <span>Project Ideas & BOM Hardware Kits ({projects.length})</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Add new engineering project ideas, modify titles, descriptions, domain categories, difficulty levels, budget targets, or upload custom hero images.
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setShowAddProjectModal(true)}
+                    className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg flex items-center space-x-1.5 transition-all"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add New Project Idea</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Projects Grid / List */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {projects.map((proj) => {
+                  const isEditing = editingProjectId === proj.id;
+
+                  return (
+                    <div
+                      key={proj.id}
+                      className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-slate-600 transition-all"
+                    >
+                      {isEditing ? (
+                        /* Editing Form */
+                        <div className="space-y-3 text-xs">
+                          <div className="flex items-center justify-between border-b border-slate-700 pb-2">
+                            <span className="font-extrabold text-amber-400">Editing Project Idea</span>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => handleSaveEditProject(proj)}
+                                className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg flex items-center space-x-1"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Save</span>
+                              </button>
+                              <button
+                                onClick={() => setEditingProjectId(null)}
+                                className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold rounded-lg"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div>
+                              <label className="text-[10px] uppercase font-bold text-slate-400">Project Title</label>
+                              <input
+                                type="text"
+                                value={editProjTitle}
+                                onChange={(e) => setEditProjTitle(e.target.value)}
+                                className="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white font-bold text-xs"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-[10px] uppercase font-bold text-slate-400">Subtitle / Summary</label>
+                              <input
+                                type="text"
+                                value={editProjSubtitle}
+                                onChange={(e) => setEditProjSubtitle(e.target.value)}
+                                className="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 text-xs"
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-2">
+                              <div>
+                                <label className="text-[10px] uppercase font-bold text-slate-400">Domain</label>
+                                <select
+                                  value={editProjDomain}
+                                  onChange={(e) => setEditProjDomain(e.target.value)}
+                                  className="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white text-xs"
+                                >
+                                  <option value="Sensors">Sensors</option>
+                                  <option value="IoT & Cloud">IoT & Cloud</option>
+                                  <option value="Robotics">Robotics</option>
+                                  <option value="Automation">Automation</option>
+                                  <option value="Audio/Visual">Audio/Visual</option>
+                                </select>
+                              </div>
+
+                              <div>
+                                <label className="text-[10px] uppercase font-bold text-slate-400">Difficulty</label>
+                                <select
+                                  value={editProjDifficulty}
+                                  onChange={(e) => setEditProjDifficulty(e.target.value as any)}
+                                  className="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white text-xs"
+                                >
+                                  <option value="Beginner">Beginner</option>
+                                  <option value="Intermediate">Intermediate</option>
+                                  <option value="Advanced">Advanced</option>
+                                </select>
+                              </div>
+
+                              <div>
+                                <label className="text-[10px] uppercase font-bold text-slate-400">Budget (₹)</label>
+                                <input
+                                  type="number"
+                                  value={editProjBudget}
+                                  onChange={(e) => setEditProjBudget(Number(e.target.value))}
+                                  className="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-white text-xs"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="text-[10px] uppercase font-bold text-slate-400">Hero Image URL</label>
+                              <div className="flex space-x-2 mt-1">
+                                <input
+                                  type="text"
+                                  value={editProjImage}
+                                  onChange={(e) => setEditProjImage(e.target.value)}
+                                  className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-slate-200 text-xs"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setImageChangeTarget({
+                                      title: `Change Photo for ${proj.title}`,
+                                      currentUrl: editProjImage,
+                                      onSave: (newUrl) => setEditProjImage(newUrl),
+                                    })
+                                  }
+                                  className="px-3 py-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg font-bold text-xs"
+                                >
+                                  Upload / Pick
+                                </button>
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="text-[10px] uppercase font-bold text-slate-400">Detailed Description</label>
+                              <textarea
+                                value={editProjDesc}
+                                onChange={(e) => setEditProjDesc(e.target.value)}
+                                rows={3}
+                                className="w-full mt-1 bg-slate-900 border border-slate-700 rounded-lg p-2 text-slate-200 text-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Read-Only View */
+                        <>
+                          <div className="flex space-x-3">
+                            <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-slate-900 border border-slate-700 flex-shrink-0 group/img">
+                              <img
+                                src={proj.heroImage}
+                                alt={proj.title}
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                onClick={() =>
+                                  setImageChangeTarget({
+                                    title: `Change Photo for ${proj.title}`,
+                                    currentUrl: proj.heroImage,
+                                    onSave: (newUrl) => {
+                                      if (onUpdateProject) {
+                                        onUpdateProject({ ...proj, heroImage: newUrl });
+                                      }
+                                    },
+                                  })
+                                }
+                                className="absolute inset-0 bg-slate-950/70 opacity-0 group-hover/img:opacity-100 flex flex-col items-center justify-center text-amber-400 font-bold text-[10px] transition-all"
+                              >
+                                <Image className="w-5 h-5 mb-1" />
+                                <span>Change Image</span>
+                              </button>
+                            </div>
+
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="px-2 py-0.5 text-[10px] font-extrabold bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded uppercase">
+                                  {proj.domain}
+                                </span>
+                                <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded">
+                                  {proj.difficulty}
+                                </span>
+                              </div>
+
+                              <h4 className="font-extrabold text-white text-sm truncate" title={proj.title}>
+                                {proj.title}
+                              </h4>
+                              <p className="text-xs text-slate-400 line-clamp-2">
+                                {proj.subtitle || proj.description}
+                              </p>
+
+                              <div className="flex items-center space-x-3 text-xs pt-1 text-slate-300 font-bold">
+                                <span>Est. Budget: <strong className="text-emerald-400">₹{proj.estimatedBudget}</strong></span>
+                                <span>Time: <strong>{proj.estimatedHours} hrs</strong></span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between pt-3 border-t border-slate-700/60 text-xs">
+                            <span className="text-slate-400 text-[11px]">
+                              BOM Components: <strong className="text-slate-200">{proj.bom.length} items</strong>
+                            </span>
+
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => handleStartEditProject(proj)}
+                                className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold rounded-lg flex items-center space-x-1"
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                                <span>Edit</span>
+                              </button>
+
+                              {onDeleteProject && (
+                                <button
+                                  onClick={() => {
+                                    if (window.confirm(`Delete project idea "${proj.title}"?`)) {
+                                      onDeleteProject(proj.id);
+                                    }
+                                  }}
+                                  className="px-3 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold rounded-lg"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Add New Project Idea Modal */}
+              {showAddProjectModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+                  <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-5 text-white space-y-4 max-h-[90vh] overflow-y-auto">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div className="flex items-center space-x-2">
+                        <Sparkles className="w-5 h-5 text-amber-400" />
+                        <h3 className="font-extrabold text-base">Add New Project Idea</h3>
+                      </div>
+                      <button onClick={() => setShowAddProjectModal(false)} className="text-slate-400 hover:text-white">
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleCreateNewProject} className="space-y-3 text-xs">
+                      <div>
+                        <label className="text-[10px] uppercase font-bold text-slate-400">Project Title *</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Smart IoT Weather Station with ESP32"
+                          value={newProjTitle}
+                          onChange={(e) => setNewProjTitle(e.target.value)}
+                          className="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-bold text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] uppercase font-bold text-slate-400">Subtitle / Tagline</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Real-time temperature & atmospheric pressure telemetry."
+                          value={newProjSubtitle}
+                          onChange={(e) => setNewProjSubtitle(e.target.value)}
+                          className="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="text-[10px] uppercase font-bold text-slate-400">Domain</label>
+                          <select
+                            value={newProjDomain}
+                            onChange={(e) => setNewProjDomain(e.target.value)}
+                            className="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-white text-xs"
+                          >
+                            <option value="Sensors">Sensors</option>
+                            <option value="IoT & Cloud">IoT & Cloud</option>
+                            <option value="Robotics">Robotics</option>
+                            <option value="Automation">Automation</option>
+                            <option value="Audio/Visual">Audio/Visual</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] uppercase font-bold text-slate-400">Difficulty</label>
+                          <select
+                            value={newProjDifficulty}
+                            onChange={(e) => setNewProjDifficulty(e.target.value as any)}
+                            className="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-white text-xs"
+                          >
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] uppercase font-bold text-slate-400">Est. Budget (₹)</label>
+                          <input
+                            type="number"
+                            value={newProjBudget}
+                            onChange={(e) => setNewProjBudget(Number(e.target.value))}
+                            className="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-white text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] uppercase font-bold text-slate-400">Hero Image URL</label>
+                        <div className="flex space-x-2 mt-1">
+                          <input
+                            type="text"
+                            value={newProjImage}
+                            onChange={(e) => setNewProjImage(e.target.value)}
+                            className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setImageChangeTarget({
+                                title: 'Upload or Select Photo for New Project',
+                                currentUrl: newProjImage,
+                                onSave: (newUrl) => setNewProjImage(newUrl),
+                              })
+                            }
+                            className="px-3 py-2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl font-bold text-xs"
+                          >
+                            Upload Photo
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] uppercase font-bold text-slate-400">Description</label>
+                        <textarea
+                          value={newProjDesc}
+                          onChange={(e) => setNewProjDesc(e.target.value)}
+                          placeholder="Describe what the student will build and learn..."
+                          rows={3}
+                          className="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl p-2 text-slate-200 text-xs"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] uppercase font-bold text-slate-400">Learning Objectives (comma separated)</label>
+                        <input
+                          type="text"
+                          value={newProjObjectives}
+                          onChange={(e) => setNewProjObjectives(e.target.value)}
+                          className="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs"
+                        />
+                      </div>
+
+                      <div className="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => setShowAddProjectModal(false)}
+                          className="px-4 py-2 bg-slate-800 text-slate-300 font-bold rounded-xl"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-4 py-2 bg-amber-500 text-slate-950 font-extrabold rounded-xl hover:bg-amber-400"
+                        >
+                          Publish Project Idea
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
