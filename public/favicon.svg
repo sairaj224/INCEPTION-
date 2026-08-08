@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="32" height="32">
+  <defs>
+    <linearGradient id="favBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="favBlueCyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+    <linearGradient id="favPurpleBlueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#A855F7" />
+      <stop offset="60%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#2563EB" />
+    </linearGradient>
+  </defs>
+
+  <!-- Dark Rounded Square Card for Sharp Tab Contrast -->
+  <rect x="0" y="0" width="200" height="200" rx="44" fill="url(#favBg)" stroke="#3b82f6" stroke-width="4" stroke-opacity="0.5" />
+
+  <!-- Top Apex Dot -->
+  <circle cx="100" cy="28" r="14" fill="url(#favBlueCyanGrad)" />
+
+  <!-- Outer Chevron Right Wing -->
+  <path d="M104 44 L168 152 H132 L100 95 V66 Z" fill="url(#favBlueCyanGrad)" />
+
+  <!-- Outer Chevron Left Wing -->
+  <path d="M96 44 L32 152 H68 L100 95 V66 Z" fill="url(#favPurpleBlueGrad)" />
+
+  <!-- Center Arrow -->
+  <path d="M100 56 L118 96 H105 V118 H95 V96 H82 Z" fill="#0F172A" />
+  <path d="M100 60 L114 92 H103 V114 H97 V92 H86 Z" fill="url(#favBlueCyanGrad)" />
+
+  <!-- Circuit Horizontal Lines -->
+  <rect x="40" y="164" width="120" height="8" rx="4" fill="url(#favBlueCyanGrad)" />
+</svg>

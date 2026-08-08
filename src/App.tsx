@@ -23,12 +23,14 @@ import { LegalModal } from './components/LegalModal';
 import { CacheSettingsModal } from './components/CacheSettingsModal';
 import { SitemapModal } from './components/SitemapModal';
 import { ErrorLogModal } from './components/ErrorLogModal';
+import { SupabaseModal } from './components/SupabaseModal';
 import { Footer } from './components/Footer';
 import { CookiePreferences } from './types';
 import { AppLogger } from './lib/logger';
 import { createSlug, updateProductSchemaJsonLd } from './lib/seo';
 import { subscribeToProducts, syncAllProductsToFirestore, seedProductsToFirestoreIfEmpty } from './lib/firebase';
-import { Search, Sparkles, Filter, IndianRupee, Cpu, ShieldAlert, User, LogIn, UserCheck } from 'lucide-react';
+import { isSupabaseConfigured, fetchSupabaseProducts, fetchSupabaseProjects, saveSupabaseProduct, saveSupabaseProject, createSupabaseOrder } from './lib/supabase';
+import { Search, Sparkles, Filter, IndianRupee, Cpu, ShieldAlert, User, LogIn, UserCheck, Database } from 'lucide-react';
 
 const PRODUCTS_STORAGE_KEY = 'inception_college_products';
 const PROJECTS_STORAGE_KEY = 'inception_college_projects';
@@ -205,6 +207,7 @@ export default function App() {
   const [isCacheSettingsOpen, setIsCacheSettingsOpen] = useState<boolean>(false);
   const [isSitemapOpen, setIsSitemapOpen] = useState<boolean>(false);
   const [isErrorLogOpen, setIsErrorLogOpen] = useState<boolean>(false);
+  const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState<boolean>(false);
 
   // Theme Preference State ('dark' | 'light')
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -248,6 +251,21 @@ export default function App() {
         setProducts(firestoreProducts);
       }
     });
+
+    // Supabase load on mount if configured
+    if (isSupabaseConfigured()) {
+      fetchSupabaseProducts().then((supProds) => {
+        if (supProds && supProds.length > 0) {
+          setProducts(supProds);
+        }
+      });
+      fetchSupabaseProjects().then((supProjs) => {
+        if (supProjs && supProjs.length > 0) {
+          setProjects(supProjs);
+        }
+      });
+    }
+
     return () => unsubscribe();
   }, []);
 
@@ -407,10 +425,13 @@ export default function App() {
   const [selectedDomain, setSelectedDomain] = useState<string>('All');
   const [maxBudgetFilter, setMaxBudgetFilter] = useState<number>(1500);
 
-  // Helper to persist products to state, localStorage & Cloud Firestore safely
+  // Helper to persist products to state, localStorage & Cloud Firestore / Supabase safely
   const updateAndPersistProducts = (newProducts: Product[]) => {
     setProducts(newProducts);
     syncAllProductsToFirestore(newProducts);
+    if (isSupabaseConfigured()) {
+      newProducts.forEach((p) => saveSupabaseProduct(p));
+    }
     try {
       localStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(newProducts));
     } catch (e) {
@@ -433,9 +454,12 @@ export default function App() {
     }
   };
 
-  // Helper to persist project ideas to state & localStorage safely
+  // Helper to persist project ideas to state & localStorage / Supabase safely
   const updateAndPersistProjects = (newProjects: Project[]) => {
     setProjects(newProjects);
+    if (isSupabaseConfigured()) {
+      newProjects.forEach((p) => saveSupabaseProject(p));
+    }
     try {
       localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(newProjects));
     } catch (e) {
@@ -511,6 +535,16 @@ export default function App() {
   const handlePlaceOrder = (newOrder: PlacedOrder) => {
     const updated = [newOrder, ...orders];
     updateAndPersistOrders(updated);
+    if (isSupabaseConfigured()) {
+      createSupabaseOrder({
+        id: newOrder.orderId,
+        userEmail: newOrder.buyer?.email || 'guest@student.edu',
+        items: newOrder.items || [],
+        totalAmount: newOrder.items?.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0,
+        deliveryMethod: newOrder.buyer?.hostelAddress ? 'hostel' : 'pickup',
+        hostelRoom: newOrder.buyer?.hostelAddress || '',
+      });
+    }
   };
 
   const handleCancelOrder = (orderId: string, reason?: string) => {
@@ -805,6 +839,10 @@ export default function App() {
               isWatched={watchlistProjectIds.has(selectedProject.id)}
               onToggleWatchlist={handleToggleWatchlistProject}
               onChangePhoto={isAdminAuthenticated ? (projId, newPhotoUrl) => handleChangeProjectPhoto(projId, newPhotoUrl) : undefined}
+              userRole={userRole}
+              isAdminAuthenticated={isAdminAuthenticated}
+              onUpdateProject={handleUpdateProject}
+              allProducts={products}
             />
           ) : activeTab === 'projects' ? (
             /* Projects Directory View */
@@ -966,6 +1004,7 @@ export default function App() {
         onOpenErrorLogs={() => setIsErrorLogOpen(true)}
         onOpenAdminInventory={() => setIsAdminInventoryOpen(true)}
         isAdminAuthenticated={isAdminAuthenticated}
+        onOpenSupabaseModal={() => setIsSupabaseModalOpen(true)}
       />
 
       {/* Cookie Consent Banner */}
@@ -1013,6 +1052,14 @@ export default function App() {
       <ErrorLogModal
         isOpen={isErrorLogOpen}
         onClose={() => setIsErrorLogOpen(false)}
+      />
+
+      {/* Supabase Connection & Setup Guide Modal */}
+      <SupabaseModal
+        isOpen={isSupabaseModalOpen}
+        onClose={() => setIsSupabaseModalOpen(false)}
+        products={products}
+        projects={projects}
       />
 
       {/* AI Project Finder Modal */}

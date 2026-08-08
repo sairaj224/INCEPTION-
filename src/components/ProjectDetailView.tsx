@@ -20,10 +20,13 @@ import {
   IndianRupee,
   Award,
   AlertCircle,
-  Heart
+  Heart,
+  Edit2,
+  Settings
 } from 'lucide-react';
 import { ComponentExplainerModal } from './ComponentExplainerModal';
 import { ImageChangeModal } from './ImageChangeModal';
+import { AdminProjectEditorModal } from './AdminProjectEditorModal';
 import { Image as ImageIcon } from 'lucide-react';
 
 interface ProjectDetailViewProps {
@@ -36,6 +39,10 @@ interface ProjectDetailViewProps {
   isWatched?: boolean;
   onToggleWatchlist?: (projectId: string) => void;
   onChangePhoto?: (projectId: string, newPhotoUrl: string) => void;
+  userRole?: 'student' | 'owner';
+  isAdminAuthenticated?: boolean;
+  onUpdateProject?: (updated: Project) => void;
+  allProducts?: Product[];
 }
 
 export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({
@@ -48,9 +55,15 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({
   isWatched = false,
   onToggleWatchlist,
   onChangePhoto,
+  userRole = 'student',
+  isAdminAuthenticated = false,
+  onUpdateProject,
+  allProducts = [],
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'quiz' | 'bom' | 'wiring' | 'code' | 'simulation' | 'troubleshoot'>('overview');
   const [isImageModalOpen, setIsImageModalOpen] = useState<boolean>(false);
+  const [isAdminEditorOpen, setIsAdminEditorOpen] = useState<boolean>(false);
+  const [adminEditorTab, setAdminEditorTab] = useState<'overview' | 'quiz' | 'bom' | 'wiring' | 'code' | 'simulation' | 'troubleshoot'>('overview');
   
   // Quiz state
   const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({});
@@ -164,6 +177,30 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       
+      {/* Admin Action Control Banner */}
+      {(userRole === 'owner' || isAdminAuthenticated || onUpdateProject) && (
+        <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-slate-900 border border-amber-500/40 p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-amber-200 text-xs shadow-lg">
+          <div className="flex items-center space-x-2">
+            <Settings className="w-4 h-4 text-amber-400" />
+            <span>
+              <strong>Store Owner & Admin Portal Active:</strong> Full edit access for project Overview, Skill Quiz (3 Qs), Smart BOM, Wiring, Code, Simulation & Troubleshooter.
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setAdminEditorTab(activeTab);
+              setIsAdminEditorOpen(true);
+            }}
+            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold rounded-xl shadow-md flex items-center space-x-1.5 transition-all active:scale-95 shrink-0"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+            <span>Edit This Project (Admin)</span>
+          </button>
+        </div>
+      )}
+
       {/* Top Bar Back Navigation */}
       <div className="flex items-center justify-between">
         <button
@@ -870,6 +907,22 @@ export const ProjectDetailView: React.FC<ProjectDetailViewProps> = ({
           onSaveImage={(newUrl) => {
             onChangePhoto(project.id, newUrl);
             setIsImageModalOpen(false);
+          }}
+        />
+      )}
+
+      {/* Admin Project Editor Modal */}
+      {isAdminEditorOpen && (
+        <AdminProjectEditorModal
+          isOpen={isAdminEditorOpen}
+          onClose={() => setIsAdminEditorOpen(false)}
+          project={project}
+          allProducts={allProducts.length > 0 ? allProducts : Array.from(productsMap.values())}
+          initialTab={adminEditorTab}
+          onSaveProject={(updatedProj) => {
+            if (onUpdateProject) {
+              onUpdateProject(updatedProj);
+            }
           }}
         />
       )}

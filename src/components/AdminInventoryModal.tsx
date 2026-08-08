@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { validateAndProcessFileUpload } from '../lib/fileUpload';
 import { ImageChangeModal } from './ImageChangeModal';
+import { AdminProjectEditorModal } from './AdminProjectEditorModal';
 import {
   Product,
   Project,
@@ -233,6 +234,8 @@ export const AdminInventoryModal: React.FC<AdminInventoryModalProps> = ({
   >('overview');
 
   // Project Ideas Edit & Create State
+  const [editorProjectModalTarget, setEditorProjectModalTarget] = useState<Project | null>(null);
+  const [isCreatingProjectWithEditorModal, setIsCreatingProjectWithEditorModal] = useState<boolean>(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editProjTitle, setEditProjTitle] = useState<string>('');
   const [editProjSubtitle, setEditProjSubtitle] = useState<string>('');
@@ -2545,7 +2548,7 @@ export const AdminInventoryModal: React.FC<AdminInventoryModalProps> = ({
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => setShowAddProjectModal(true)}
+                    onClick={() => setIsCreatingProjectWithEditorModal(true)}
                     className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold text-xs rounded-xl shadow-lg flex items-center space-x-1.5 transition-all"
                   >
                     <Plus className="w-4 h-4" />
@@ -2743,11 +2746,11 @@ export const AdminInventoryModal: React.FC<AdminInventoryModalProps> = ({
 
                             <div className="flex items-center space-x-2">
                               <button
-                                onClick={() => handleStartEditProject(proj)}
-                                className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold rounded-lg flex items-center space-x-1"
+                                onClick={() => setEditorProjectModalTarget(proj)}
+                                className="px-3 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded-lg font-bold flex items-center space-x-1"
                               >
                                 <Edit2 className="w-3.5 h-3.5" />
-                                <span>Edit</span>
+                                <span>Edit Project</span>
                               </button>
 
                               {onDeleteProject && (
@@ -2940,6 +2943,38 @@ export const AdminInventoryModal: React.FC<AdminInventoryModalProps> = ({
             onSaveImage={(newUrl) => {
               imageChangeTarget.onSave(newUrl);
               setImageChangeTarget(null);
+            }}
+          />
+        )}
+
+        {/* Full Admin Project Editor Modal for Edit */}
+        {editorProjectModalTarget && (
+          <AdminProjectEditorModal
+            isOpen={!!editorProjectModalTarget}
+            onClose={() => setEditorProjectModalTarget(null)}
+            project={editorProjectModalTarget}
+            allProducts={products}
+            onSaveProject={(updatedProj) => {
+              if (onUpdateProject) {
+                onUpdateProject(updatedProj);
+              }
+              setEditorProjectModalTarget(null);
+            }}
+          />
+        )}
+
+        {/* Full Admin Project Editor Modal for Create */}
+        {isCreatingProjectWithEditorModal && (
+          <AdminProjectEditorModal
+            isOpen={isCreatingProjectWithEditorModal}
+            onClose={() => setIsCreatingProjectWithEditorModal(false)}
+            project={null}
+            allProducts={products}
+            onSaveProject={(newProj) => {
+              if (onAddProject) {
+                onAddProject(newProj);
+              }
+              setIsCreatingProjectWithEditorModal(false);
             }}
           />
         )}

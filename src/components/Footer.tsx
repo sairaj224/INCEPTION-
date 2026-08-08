@@ -11,6 +11,7 @@ interface FooterProps {
   onOpenErrorLogs?: () => void;
   onOpenAdminInventory?: () => void;
   isAdminAuthenticated?: boolean;
+  onOpenSupabaseModal?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -22,6 +23,7 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenErrorLogs,
   onOpenAdminInventory,
   isAdminAuthenticated,
+  onOpenSupabaseModal,
 }) => {
   return (
     <footer className="mt-16 bg-slate-900 border-t border-slate-800 text-slate-400 text-xs py-8 px-4 sm:px-6">
@@ -158,6 +160,14 @@ export const Footer: React.FC<FooterProps> = ({
             <button onClick={onOpenCookieSettings} className="hover:underline">Cookies</button>
             <span>•</span>
             <button onClick={onOpenCacheSettings} className="hover:underline">Cache Settings</button>
+            {onOpenSupabaseModal && (
+              <>
+                <span>•</span>
+                <button onClick={onOpenSupabaseModal} className="hover:underline text-emerald-400 font-bold flex items-center space-x-1">
+                  <span>Supabase Database Guide</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
