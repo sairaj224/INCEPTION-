@@ -5,6 +5,7 @@ import { Project, Product, CartItem, AIRecommendation, CommunityPost, UserProfil
 import { Header } from './components/Header';
 import { ProjectCard } from './components/ProjectCard';
 import { ProjectDetailView } from './components/ProjectDetailView';
+import { SingleProductDetailView } from './components/SingleProductDetailView';
 import { ProjectFinderModal } from './components/ProjectFinderModal';
 import { MarketplaceView } from './components/MarketplaceView';
 import { CommunityShowcase } from './components/CommunityShowcase';
@@ -71,6 +72,7 @@ const SAMPLE_INITIAL_ORDERS: PlacedOrder[] = [
 export default function App() {
   const [activeTab, setActiveTab] = useState<'projects' | 'marketplace'>('projects');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   // User Role State ('student' vs 'owner') strictly tied to authentication
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
@@ -692,6 +694,7 @@ export default function App() {
           setActiveTab={(tab) => {
             setActiveTab(tab);
             setSelectedProject(null);
+            setSelectedProduct(null);
           }}
           cartCount={cartTotalCount}
           onOpenCart={() => setIsCartOpen(true)}
@@ -770,7 +773,28 @@ export default function App() {
 
         {/* Main Workspace Render */}
         <main className="pb-16">
-          {selectedProject ? (
+          {selectedProduct ? (
+            <SingleProductDetailView
+              product={selectedProduct}
+              allProducts={products}
+              allProjects={projects}
+              onBack={() => setSelectedProduct(null)}
+              onAddToCart={(prod, qty) => handleAddToCart(prod, qty)}
+              onBuyNow={(prod, qty) => {
+                handleAddToCart(prod, qty);
+                setIsCartOpen(true);
+              }}
+              onSelectProject={(proj) => {
+                setSelectedProduct(null);
+                setSelectedProject(proj);
+              }}
+              onSelectProduct={(prod) => setSelectedProduct(prod)}
+              isWatched={watchlistProductIds.has(selectedProduct.id)}
+              onToggleWatchlist={handleToggleWatchlistProduct}
+              userRole={userRole}
+              onUpdateProduct={handleUpdateProduct}
+            />
+          ) : selectedProject ? (
             <ProjectDetailView
               project={selectedProject}
               productsMap={productsMap}
@@ -923,8 +947,10 @@ export default function App() {
               userRole={userRole}
               onOpenAdminModal={() => setIsAdminInventoryOpen(true)}
               onUpdateProductPrice={handleUpdateProductPrice}
+              onUpdateProduct={handleUpdateProduct}
               watchlistProductIds={watchlistProductIds}
               onToggleWatchlistProduct={handleToggleWatchlistProduct}
+              onSelectProduct={(prod) => setSelectedProduct(prod)}
             />
           )}
         </main>

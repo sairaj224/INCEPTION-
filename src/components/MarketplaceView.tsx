@@ -14,6 +14,7 @@ interface MarketplaceViewProps {
   onUpdateProduct?: (product: Product) => void;
   watchlistProductIds?: Set<string>;
   onToggleWatchlistProduct?: (productId: string) => void;
+  onSelectProduct?: (product: Product) => void;
 }
 
 export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
@@ -25,6 +26,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
   onUpdateProduct,
   watchlistProductIds = new Set(),
   onToggleWatchlistProduct,
+  onSelectProduct,
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -145,7 +147,8 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
           return (
             <div
               key={p.id}
-              className="bg-white border border-slate-200 hover:border-blue-400 rounded-xl p-4 flex flex-col justify-between space-y-4 transition-all shadow-sm hover:shadow-md group relative"
+              className="bg-white border border-slate-200 hover:border-blue-400 rounded-xl p-4 flex flex-col justify-between space-y-4 transition-all shadow-sm hover:shadow-md group relative cursor-pointer"
+              onClick={() => onSelectProduct && onSelectProduct(p)}
             >
               <div className="space-y-3">
                 <div className="relative h-40 w-full rounded-lg overflow-hidden bg-slate-100">
@@ -161,7 +164,10 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                   {userRole === 'owner' && onUpdateProduct && (
                     <button
                       type="button"
-                      onClick={() => setTargetImageProduct(p)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTargetImageProduct(p);
+                      }}
                       className="absolute bottom-2 left-2 px-2 py-1 bg-slate-900/80 hover:bg-slate-900 text-white font-bold text-[10px] rounded-lg backdrop-blur-md border border-slate-700/80 flex items-center space-x-1 opacity-90 hover:opacity-100 transition-all z-10"
                       title="Change Component Photo"
                     >
@@ -205,7 +211,7 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-3 pt-2 border-t border-slate-100">
+              <div className="space-y-3 pt-2 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between">
                   {/* Price display or inline owner price edit */}
                   {userRole === 'owner' && isEditingPrice ? (
@@ -245,13 +251,14 @@ export const MarketplaceView: React.FC<MarketplaceViewProps> = ({
                     </div>
                   )}
 
-                  <button
-                    onClick={() => setSelectedProductForGuide(p)}
-                    className="text-[11px] text-slate-500 hover:text-blue-600 flex items-center space-x-1 font-medium"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                    <span>How it works</span>
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => onSelectProduct ? onSelectProduct(p) : setSelectedProductForGuide(p)}
+                      className="text-[11px] text-blue-600 hover:text-blue-700 font-bold flex items-center space-x-0.5"
+                    >
+                      <span>Specs & Page →</span>
+                    </button>
+                  </div>
                 </div>
 
                 <button
