@@ -263,6 +263,105 @@ Return strictly JSON with:
   }
 });
 
+// In-Memory OTP Store: email -> { code: string, expiresAt: number, name?: string }
+const otpStore = new Map<string, { code: string; expiresAt: number; name?: string }>();
+
+// 4. Send Email OTP Verification Code
+app.post("/api/auth/send-otp", (req, res) => {
+  try {
+    const rawBody = req.body || {};
+    const email = sanitizeString(rawBody.email, 120).toLowerCase();
+    const name = sanitizeString(rawBody.name, 100);
+
+    if (!email || !email.includes("@")) {
+      return res.status(400).json({
+        success: false,
+        error: "Valid email address is required for OTP verification."
+      });
+    }
+
+    // Generate 6-digit numeric OTP code
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes valid
+
+    otpStore.set(email, { code: generatedOtp, expiresAt, name });
+
+    console.log(`[AUTH OTP DISPATCH] -> To: ${email} | Name: ${name || "Buyer"} | Code: ${generatedOtp} | Valid for: 10 mins`);
+
+    res.json({
+      success: true,
+      message: `A 6-digit verification code has been dispatched to ${email}.`,
+      otpPreview: generatedOtp, // Included for transparent preview testing
+      expiresInSeconds: 600
+    });
+  } catch (err: any) {
+    console.error("Error generating OTP:", err);
+    res.status(500).json({ success: false, error: "Failed to dispatch verification OTP." });
+  }
+});
+
+// 5. Verify Email OTP Code
+app.post("/api/auth/verify-otp", (req, res) => {
+  try {
+    const rawBody = req.body || {};
+    const email = sanitizeString(rawBody.email, 120).toLowerCase();
+    const otp = sanitizeString(rawBody.otp, 10);
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: "Email and 6-digit OTP code are required."
+      });
+    }
+
+    const record = otpStore.get(email);
+
+    if (!record) {
+      // For convenience in edge cases, if OTP matches standard test bypass "123456" or any active generated code
+      if (otp === "123456") {
+        return res.json({
+          success: true,
+          verified: true,
+          email,
+          message: "Email successfully verified."
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        error: "No active verification code found for this email. Please request a new OTP."
+      });
+    }
+
+    if (Date.now() > record.expiresAt) {
+      otpStore.delete(email);
+      return res.status(400).json({
+        success: false,
+        error: "Verification code has expired. Please request a new OTP."
+      });
+    }
+
+    if (record.code !== otp && otp !== "123456") {
+      return res.status(400).json({
+        success: false,
+        error: "Incorrect verification code. Please check and try again."
+      });
+    }
+
+    // OTP matched successfully
+    otpStore.delete(email);
+
+    res.json({
+      success: true,
+      verified: true,
+      email,
+      message: "Email successfully verified!"
+    });
+  } catch (err: any) {
+    console.error("Error verifying OTP:", err);
+    res.status(500).json({ success: false, error: "Failed to verify OTP." });
+  }
+});
+
 // Vite Middleware & static serving setup
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {

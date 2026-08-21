@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Product, Project } from '../types';
+import { Product, Project, UserProfile, CommunityPost } from '../types';
 
 const env = (import.meta as any).env || {};
 const supabaseUrl = env.VITE_SUPABASE_URL || '';
@@ -35,7 +35,9 @@ const DEFAULT_DETAIL_GUIDE = {
   alternativeComponents: ['Generic Equivalent Module'],
 };
 
-// Fetch Products from Supabase
+// -------------------------------------------------------------
+// 1. PRODUCTS
+// -------------------------------------------------------------
 export async function fetchSupabaseProducts(): Promise<Product[] | null> {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
@@ -72,7 +74,6 @@ export async function fetchSupabaseProducts(): Promise<Product[] | null> {
   return null;
 }
 
-// Upsert Product to Supabase
 export async function saveSupabaseProduct(product: Product): Promise<boolean> {
   const supabase = getSupabaseClient();
   if (!supabase) return false;
@@ -110,7 +111,9 @@ export async function saveSupabaseProduct(product: Product): Promise<boolean> {
   }
 }
 
-// Fetch Projects from Supabase
+// -------------------------------------------------------------
+// 2. PROJECTS (Includes Project Kits & Firmware Code Snippets)
+// -------------------------------------------------------------
 export async function fetchSupabaseProjects(): Promise<Project[] | null> {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
@@ -149,7 +152,6 @@ export async function fetchSupabaseProjects(): Promise<Project[] | null> {
   return null;
 }
 
-// Upsert Project to Supabase
 export async function saveSupabaseProject(project: Project): Promise<boolean> {
   const supabase = getSupabaseClient();
   if (!supabase) return false;
@@ -169,7 +171,7 @@ export async function saveSupabaseProject(project: Project): Promise<boolean> {
       bom: project.bom,
       quiz: project.quiz,
       pinout_table: project.pinoutTable,
-      code_snippet: project.codeSnippet,
+      code_snippet: project.codeSnippet, // Arduino / C++ / Python firmware code
       simulation_config: project.simulationConfig,
       e_waste_score: project.eWasteScore,
       faculty_approved: project.facultyApproved,
@@ -189,7 +191,9 @@ export async function saveSupabaseProject(project: Project): Promise<boolean> {
   }
 }
 
-// Save New Order to Supabase
+// -------------------------------------------------------------
+// 3. ORDERS
+// -------------------------------------------------------------
 export async function createSupabaseOrder(orderData: Record<string, any>): Promise<boolean> {
   const supabase = getSupabaseClient();
   if (!supabase) return false;
@@ -216,4 +220,74 @@ export async function createSupabaseOrder(orderData: Record<string, any>): Promi
     console.error('Supabase order creation exception:', err);
     return false;
   }
+}
+
+// -------------------------------------------------------------
+// 4. USER PROFILES
+// -------------------------------------------------------------
+export async function saveSupabaseUserProfile(profile: UserProfile): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return false;
+
+  try {
+    const { error } = await supabase.from('user_profiles').upsert([
+      {
+        id: profile.id,
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone,
+        college_name: profile.collegeName,
+        department: profile.department,
+        year_or_roll_no: profile.yearOrRollNo,
+        hostel_address: profile.hostelAddress,
+        saved_addresses: profile.savedAddresses || [],
+        updated_at: new Date().toISOString(),
+      },
+    ], { onConflict: 'id' });
+    if (error) {
+      console.error('Error saving user profile to Supabase:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Supabase profile save exception:', err);
+    return false;
+  }
+}
+
+// -------------------------------------------------------------
+// 5. COMMUNITY POSTS
+// -------------------------------------------------------------
+export async function fetchSupabaseCommunityPosts(): Promise<CommunityPost[] | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+
+  try {
+    const { data, error } = await supabase.from('community_posts').select('*');
+    if (error) {
+      console.warn('Supabase community posts fetch warning:', error.message);
+      return null;
+    }
+    if (data && data.length > 0) {
+      return data.map((item: any) => ({
+        id: item.id,
+        projectId: item.project_id || item.projectId,
+        studentName: item.student_name || item.studentName,
+        studentCollege: item.student_college || item.studentCollege,
+        studentAvatar: item.student_avatar || item.studentAvatar,
+        title: item.title,
+        description: item.description,
+        budgetSpent: Number(item.budget_spent || item.budgetSpent || 0),
+        timeTaken: item.time_taken || item.timeTaken || '2 days',
+        photoUrl: item.photo_url || item.photoUrl,
+        likes: Number(item.likes || 0),
+        commentsCount: Number(item.comments_count || item.commentsCount || 0),
+        verifiedBuilt: Boolean(item.verified_built ?? item.verifiedBuilt ?? true),
+        postedAt: item.posted_at || item.postedAt || new Date().toISOString(),
+      }));
+    }
+  } catch (err) {
+    console.error('Failed to fetch community posts from Supabase:', err);
+  }
+  return null;
 }

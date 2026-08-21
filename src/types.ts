@@ -19,6 +19,15 @@ export interface ProductReview {
   verifiedBuyer?: boolean;
 }
 
+export interface ProductVideoLesson {
+  title: string;
+  youtubeId: string;
+  duration: string;
+  instructor: string;
+  description: string;
+  keyTimestamps?: { time: string; topic: string }[];
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -32,6 +41,7 @@ export interface Product {
   specs: Record<string, string>;
   pinout?: string[];
   detailGuide: ComponentDetail;
+  videoTutorial?: ProductVideoLesson;
   isPopular?: boolean;
   rating?: number;
   reviewCount?: number;
@@ -157,13 +167,22 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
+  emailVerified?: boolean;
   phone: string;
+  alternatePhone?: string;
   collegeName: string;
   department: string;
   yearOrRollNo: string;
   hostelAddress: string;
+  city?: string;
+  state?: string;
+  pinCode?: string;
+  landmark?: string;
   isLoggedIn: boolean;
   savedAddresses?: SavedAddress[];
+  avatarUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface OrderItem {
@@ -185,15 +204,23 @@ export interface ReturnRequest {
 
 export interface PlacedOrder {
   orderId: string;
+  userId?: string;
+  userEmail?: string;
   createdAt: string;
+  updatedAt?: string;
   buyer: {
     name: string;
     email: string;
     phone: string;
+    alternatePhone?: string;
     collegeName: string;
     department: string;
     yearOrRollNo: string;
     hostelAddress: string;
+    city?: string;
+    state?: string;
+    pinCode?: string;
+    landmark?: string;
   };
   items: OrderItem[];
   subtotal: number;
@@ -275,6 +302,188 @@ export interface CacheStats {
   totalStorageBytes: number;
   lastCachedAt: string;
   isOfflineReady: boolean;
+}
+
+// ==========================================
+// INSPECTIONLABS LEARNING HUB TYPES
+// ==========================================
+
+export type SensorCategoryType = 'Temperature & Humidity' | 'Environmental & Gas' | 'Distance & Ranging' | 'Motion & Inertia' | 'Optical & Light' | 'Soil & Agriculture' | 'Identification & Security';
+
+export interface PinoutGuideEntry {
+  pinNumber: number;
+  pinName: string;
+  function: string;
+  voltage: string;
+  recommendedConnection: string;
+}
+
+export interface WiringStep {
+  step: number;
+  fromComponentPin: string;
+  toBoardPin: string;
+  wireColor: string;
+  reason: string;
+}
+
+export interface CodeExample {
+  platform: 'Arduino C++' | 'ESP32 MicroPython' | 'Raspberry Pi Python';
+  title: string;
+  librariesRequired: string[];
+  code: string;
+  explanation: string;
+}
+
+export interface SensorCommonMistake {
+  mistake: string;
+  consequence: string;
+  fix: string;
+}
+
+export interface TroubleshootingEntry {
+  symptom: string;
+  probableCause: string;
+  stepToFix: string;
+}
+
+export interface MiniProjectIdea {
+  title: string;
+  difficulty: DifficultyLevel;
+  description: string;
+  keyComponents: string[];
+}
+
+export interface VideoLesson {
+  id: string;
+  title: string;
+  youtubeId: string;
+  channel: string;
+  duration: string;
+  category: 'Sensors' | 'Microcontrollers' | 'Protocols' | 'Circuits' | 'IoT';
+  summary: string;
+  keyTakeaways: string[];
+}
+
+export interface SensorSimulationModel {
+  parameterLabel: string;
+  min: number;
+  max: number;
+  unit: string;
+  defaultValue: number;
+  outputFormulaText: string;
+  step: number;
+  interpretValue: (val: number) => {
+    rawSignal: string;
+    convertedValue: string;
+    status: string;
+    statusColor: 'emerald' | 'amber' | 'rose' | 'blue';
+    technicalNote: string;
+  };
+}
+
+export interface SensorTopic {
+  id: string;
+  name: string;
+  modelNumber: string;
+  category: SensorCategoryType;
+  heroImage: string;
+  summary: string;
+  whatItMeasures: string;
+  howItWorks: string;
+  specs: {
+    operatingVoltage: string;
+    currentConsumption: string;
+    measurementRange: string;
+    accuracy: string;
+    outputType: string;
+    responseSpeed: string;
+    interfacePinsCount: number;
+  };
+  applications: string[];
+  pinoutGuide: PinoutGuideEntry[];
+  circuitDiagram: {
+    microcontroller: string;
+    wiringSteps: WiringStep[];
+    safetyNotes: string[];
+  };
+  codeExamples: CodeExample[];
+  commonMistakes: SensorCommonMistake[];
+  troubleshootingGuide: TroubleshootingEntry[];
+  miniProjects: MiniProjectIdea[];
+  videos: VideoLesson[];
+  simulation: SensorSimulationModel;
+}
+
+export type ProtocolType = 'GPIO' | 'I2C' | 'SPI' | 'UART' | 'PWM' | 'ADC' | 'DAC' | 'Touch' | 'Power' | 'Ground' | 'Reset' | 'Strapping';
+
+export interface BoardPin {
+  id: string;
+  pinSequence: number;
+  pinName: string;
+  side: 'left' | 'right' | 'top' | 'bottom';
+  primaryType: 'GPIO' | 'Power' | 'Ground' | 'Analog' | 'Reset' | 'Special';
+  protocols: ProtocolType[];
+  voltage: string;
+  maxCurrentMa: number;
+  pullUpAvailable: boolean;
+  isStrappingPin?: boolean;
+  isInputOnly?: boolean;
+  safeForBoot: boolean;
+  description: string;
+  recommendedUse: string;
+  cautionWarning?: string;
+}
+
+export interface MicrocontrollerBoard {
+  id: string;
+  name: string;
+  shortName: string;
+  manufacturer: string;
+  chipset: string;
+  architecture: string;
+  clockSpeed: string;
+  operatingVoltage: string;
+  inputVoltageVin: string;
+  flashMemory: string;
+  sram: string;
+  wirelessConnectivity: string;
+  totalPins: number;
+  gpioPinsCount: number;
+  adcPinsCount: number;
+  pwmPinsCount: number;
+  i2cCount: number;
+  spiCount: number;
+  uartCount: number;
+  heroImage: string;
+  overview: string;
+  bestUsedFor: string[];
+  criticalWarnings: string[];
+  layoutType: 'dual-inline-30' | 'dual-inline-38' | 'arduino-uno' | 'pico-40' | 'rpi-40';
+  pins: BoardPin[];
+  videos: VideoLesson[];
+}
+
+export interface LearningPathStage {
+  id: string;
+  stageNumber: number;
+  title: string;
+  badgeName: string;
+  badgeIcon: string;
+  estimatedMinutes: number;
+  shortSummary: string;
+  learningObjectives: string[];
+  keyConcepts: {
+    heading: string;
+    explanation: string;
+    practicalTakeaway: string;
+  }[];
+  quiz: {
+    question: string;
+    options: string[];
+    correctIndex: number;
+    explanation: string;
+  };
+  videos?: VideoLesson[];
 }
 
 

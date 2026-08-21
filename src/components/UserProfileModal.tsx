@@ -131,57 +131,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     setActiveTab('profile');
   };
 
-  // Trial 1-Click Login Generators
-  const handleQuickStudentTrial = () => {
-    setLoginRoleTab('student');
-    setUserRole('student');
-    const trialStudent: UserProfile = {
-      id: 'usr-student-trial',
-      name: 'Rahul Sharma',
-      email: 'rahul.sharma@iitb.ac.in',
-      phone: '+91 98765 43210',
-      collegeName: 'IIT Bombay',
-      department: 'Electronics & Electrical Engg',
-      yearOrRollNo: '210040089 (3rd Year)',
-      hostelAddress: 'Hostel 14, Room 208, Campus',
-      isLoggedIn: true,
-    };
-    onUpdateProfile(trialStudent);
-    setAuthName(trialStudent.name);
-    setAuthEmail(trialStudent.email);
-    setAuthPhone(trialStudent.phone);
-    setCollegeName(trialStudent.collegeName);
-    setDepartment(trialStudent.department);
-    setYearOrRollNo(trialStudent.yearOrRollNo);
-    setHostelAddress(trialStudent.hostelAddress);
-    setActiveTab('profile');
-  };
-
-  const handleQuickOwnerTrial = () => {
-    setLoginRoleTab('owner');
-    setUserRole('owner');
-    const trialOwner: UserProfile = {
-      id: 'usr-owner-trial',
-      name: 'Vikram Mehta (Store Manager)',
-      email: 'store.admin@campus-hardware.edu',
-      phone: '+91 98200 11223',
-      collegeName: 'Campus Hardware & Robotics Hub',
-      department: 'Store Owner & Pricing Admin',
-      yearOrRollNo: 'STORE-OWNER-ID-01',
-      hostelAddress: 'Student Activity Centre, Shop 04, Main Campus',
-      isLoggedIn: true,
-    };
-    onUpdateProfile(trialOwner);
-    setAuthName(trialOwner.name);
-    setAuthEmail(trialOwner.email);
-    setAuthPhone(trialOwner.phone);
-    setCollegeName(trialOwner.collegeName);
-    setDepartment(trialOwner.department);
-    setYearOrRollNo(trialOwner.yearOrRollNo);
-    setHostelAddress(trialOwner.hostelAddress);
-    setActiveTab('profile');
-  };
-
   const handleLogout = () => {
     onUpdateProfile({
       ...userProfile,
@@ -226,33 +175,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           >
             <X className="w-5 h-5" />
           </button>
-        </div>
-
-        {/* Trial Fast-Switch Bar */}
-        <div className="flex-shrink-0 p-2.5 sm:p-3 bg-slate-800 border-b border-slate-700 flex flex-wrap items-center justify-between gap-2 text-xs">
-          <span className="text-slate-300 font-medium">⚡ Quick Trial Login:</span>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={handleQuickStudentTrial}
-              className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-bold transition-all ${
-                userRole === 'student' && userProfile.isLoggedIn
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
-              }`}
-            >
-              Trial as Student
-            </button>
-            <button
-              onClick={handleQuickOwnerTrial}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                userRole === 'owner' && userProfile.isLoggedIn
-                  ? 'bg-amber-500 text-slate-950 shadow-sm'
-                  : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
-              }`}
-            >
-              Trial as Store Owner
-            </button>
-          </div>
         </div>
 
         {/* Tab Navigation */}
@@ -814,43 +736,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 </div>
               </div>
 
-              {/* Fast Trial Fill Banner */}
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
-                <div>
-                  <span className="font-bold text-slate-900 block text-xs">Want an instant trial?</span>
-                  <span className="text-slate-600 text-[11px]">No password needed for quick prototype testing</span>
-                </div>
-                {loginRoleTab === 'student' ? (
-                  <button
-                    type="button"
-                    onClick={handleQuickStudentTrial}
-                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-lg shadow-sm"
-                  >
-                    ⚡ Trial Student Login
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleQuickOwnerTrial}
-                    className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg shadow-sm"
-                  >
-                    ⚡ Trial Owner Login
-                  </button>
-                )}
-              </div>
-
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 space-y-1">
                 <span className="font-bold text-slate-900 block text-xs">
                   {loginRoleTab === 'owner'
-                    ? 'Enter Custom Store Owner Credentials'
+                    ? 'Enter Store Owner Credentials'
                     : isRegistering
-                    ? 'Create Custom Student Account'
-                    : 'Custom Student Sign In'}
+                    ? 'Create Student Buyer Account'
+                    : 'Student Buyer Sign In'}
                 </span>
                 <p className="text-slate-500 text-[11px]">
                   {loginRoleTab === 'owner'
-                    ? 'Use your own email & password to test store inventory control & price editing.'
-                    : 'Fill in your own name, email & college phone to test student checkout & order tracking.'}
+                    ? 'Enter authorized store admin email & password for inventory & price editing.'
+                    : 'Sign in to access your saved hardware cart, orders, and college delivery.'}
                 </p>
               </div>
 
@@ -956,30 +853,22 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               {/* Google & Social Login Options */}
               <div className="pt-2 border-t border-slate-200 space-y-2">
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block text-center">
-                  Or Sign In with Single Sign-On (SSO)
+                  Campus Authentication Options
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={handleQuickStudentTrial}
-                    className="w-full py-2 px-3 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg text-slate-700 font-bold text-xs flex items-center justify-center space-x-2 shadow-xs"
-                  >
+                  <div className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-semibold text-xs flex items-center justify-center space-x-2">
                     <svg className="w-4 h-4" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/>
                       <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.31 24 12 24z"/>
                       <path fill="#FBBC05" d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z"/>
                       <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"/>
                     </svg>
-                    <span>Google .EDU Single Sign-On</span>
-                  </button>
+                    <span>.EDU Domain Verified</span>
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={handleQuickOwnerTrial}
-                    className="w-full py-2 px-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-lg flex items-center justify-center space-x-2 shadow-xs"
-                  >
-                    <span>🏫 Campus Institution ID</span>
-                  </button>
+                  <div className="w-full py-2 px-3 bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs rounded-lg flex items-center justify-center space-x-2">
+                    <span>🏫 College Roll / ID Verified</span>
+                  </div>
                 </div>
               </div>
 

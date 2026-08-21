@@ -29,7 +29,7 @@ export const Footer: React.FC<FooterProps> = ({
     <footer className="mt-16 bg-slate-900 border-t border-slate-800 text-slate-400 text-xs py-8 px-4 sm:px-6">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pb-6 border-b border-slate-800/80">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-6 border-b border-slate-800/80">
           
           {/* Col 1: Store Branding & Cache Status */}
           <div className="space-y-3 md:col-span-1">
@@ -126,23 +126,6 @@ export const Footer: React.FC<FooterProps> = ({
                 <span>Auto-saved student cart & watchlists</span>
               </li>
             </ul>
-          </div>
-
-          {/* Col 4: Store Admin & Analytics */}
-          <div className="space-y-2">
-            <h4 className="text-slate-200 font-bold text-xs uppercase tracking-wider">Store Admin & Analytics</h4>
-            <p className="text-slate-400 text-[11px]">
-              Owner metrics, inventory restock alerts, coupon codes, and order analytics portal.
-            </p>
-            {onOpenAdminInventory && (
-              <button
-                onClick={onOpenAdminInventory}
-                className="mt-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40 rounded-lg text-[11px] font-bold flex items-center space-x-1.5 transition-all"
-              >
-                <BarChart3 className="w-3.5 h-3.5 text-amber-400" />
-                <span>{isAdminAuthenticated ? 'Admin Dashboard & Analytics' : 'Store Admin Portal'}</span>
-              </button>
-            )}
           </div>
 
         </div>

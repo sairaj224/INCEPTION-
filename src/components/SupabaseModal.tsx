@@ -84,16 +84,47 @@ CREATE TABLE IF NOT EXISTS public.orders (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS public.community_posts (
+  id TEXT PRIMARY KEY,
+  project_id TEXT,
+  student_name TEXT NOT NULL,
+  student_college TEXT,
+  student_avatar TEXT,
+  title TEXT NOT NULL,
+  description TEXT,
+  budget_spent NUMERIC DEFAULT 0,
+  time_taken TEXT,
+  photo_url TEXT,
+  likes INTEGER DEFAULT 0,
+  comments_count INTEGER DEFAULT 0,
+  verified_built BOOLEAN DEFAULT true,
+  posted_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.user_profiles (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT,
+  college_name TEXT,
+  department TEXT,
+  year_or_roll_no TEXT,
+  hostel_address TEXT,
+  saved_addresses JSONB DEFAULT '[]'::jsonb,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.community_posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow public read on products" ON public.products FOR SELECT USING (true);
-CREATE POLICY "Allow insert/update on products" ON public.products FOR ALL USING (true);
-CREATE POLICY "Allow public read on projects" ON public.projects FOR SELECT USING (true);
-CREATE POLICY "Allow insert/update on projects" ON public.projects FOR ALL USING (true);
-CREATE POLICY "Allow public read on orders" ON public.orders FOR SELECT USING (true);
-CREATE POLICY "Allow insert/update on orders" ON public.orders FOR ALL USING (true);`;
+CREATE POLICY "Allow public access on products" ON public.products FOR ALL USING (true);
+CREATE POLICY "Allow public access on projects" ON public.projects FOR ALL USING (true);
+CREATE POLICY "Allow public access on orders" ON public.orders FOR ALL USING (true);
+CREATE POLICY "Allow public access on community_posts" ON public.community_posts FOR ALL USING (true);
+CREATE POLICY "Allow public access on user_profiles" ON public.user_profiles FOR ALL USING (true);`;
 
   if (!isOpen) return null;
 

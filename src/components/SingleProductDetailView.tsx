@@ -21,7 +21,11 @@ import {
   MessageSquare,
   Maximize2,
   X,
-  Send
+  Send,
+  Play,
+  Video,
+  Clock,
+  BookOpen
 } from 'lucide-react';
 import { OptimizedImage } from './OptimizedImage';
 
@@ -566,6 +570,71 @@ export const SingleProductDetailView: React.FC<SingleProductDetailViewProps> = (
                 </ul>
               </div>
             </div>
+
+            {/* Embedded Component Video Tutorial (DHT11, ESP32, MQ-2, etc. respective lessons) */}
+            {product.videoTutorial && (
+              <div className="p-5 rounded-3xl bg-slate-950 border border-blue-500/30 space-y-4 shadow-xl shadow-blue-950/20">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-xl bg-rose-600/20 border border-rose-500/40 flex items-center justify-center text-rose-400">
+                      <Video className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-sm text-white flex items-center gap-1.5">
+                        <span>{product.videoTutorial.title}</span>
+                        <span className="px-2 py-0.5 text-[9px] bg-rose-500/20 text-rose-300 rounded border border-rose-500/40 uppercase font-black">
+                          Video Lesson
+                        </span>
+                      </h4>
+                      <p className="text-[11px] text-slate-400">
+                        Instructor: <strong>{product.videoTutorial.instructor}</strong> • Duration: {product.videoTutorial.duration}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] px-2.5 py-1 bg-slate-900 text-blue-300 font-mono rounded-lg border border-slate-800 self-start sm:self-auto">
+                    Part of {product.name} Lab Syllabus
+                  </span>
+                </div>
+
+                {/* YouTube Video Player Embed */}
+                <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-slate-800 bg-black shadow-inner">
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${product.videoTutorial.youtubeId}?rel=0&modestbranding=1`}
+                    title={product.videoTutorial.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="w-full h-full border-0"
+                  />
+                </div>
+
+                <p className="text-slate-300 text-xs leading-relaxed">
+                  {product.videoTutorial.description}
+                </p>
+
+                {/* Video Lesson Key Timestamps & Checkpoints */}
+                {product.videoTutorial.keyTimestamps && product.videoTutorial.keyTimestamps.length > 0 && (
+                  <div className="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-800 space-y-2">
+                    <span className="font-bold text-[11px] text-blue-400 uppercase tracking-wider flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      <span>Video Lesson Checkpoints & Timestamps</span>
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {product.videoTutorial.keyTimestamps.map((ts, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center space-x-2 text-xs p-2 rounded-xl bg-slate-950 border border-slate-800/80"
+                        >
+                          <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300 rounded border border-blue-400/30">
+                            {ts.time}
+                          </span>
+                          <span className="text-slate-300 truncate">{ts.topic}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Alternatives */}
             {product.detailGuide.alternativeComponents && (

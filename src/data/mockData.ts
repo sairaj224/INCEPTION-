@@ -28,6 +28,19 @@ export const MOCK_PRODUCTS: Product[] = [
         'Wireless weather stations uploading telemetry to cloud dashboards'
       ],
       alternativeComponents: ['ESP8266 NodeMCU (Cheaper, ₹210)', 'Raspberry Pi Pico W (₹450)']
+    },
+    videoTutorial: {
+      title: 'ESP32 Pinout, WiFi Setup & First Code Walkthrough',
+      youtubeId: 'k_D_Qu0cgu8',
+      duration: '8:45 mins',
+      instructor: 'Prof. S. Ranganathan (IoT Hardware Lab)',
+      description: 'Learn the ESP32 pinout diagram, flashing firmware with Arduino IDE/VS Code, and connecting to campus Wi-Fi.',
+      keyTimestamps: [
+        { time: '0:00', topic: 'Board Pinout & Power Rails (3.3V vs 5V VIN)' },
+        { time: '2:15', topic: 'Installing ESP32 Board Manager in Arduino IDE' },
+        { time: '4:40', topic: 'GPIO Rules: Strapping Pins & ADC2 Limitations' },
+        { time: '6:55', topic: 'Connecting to Wi-Fi & Live Serial Telemetry' },
+      ],
     }
   },
   {
@@ -50,6 +63,18 @@ export const MOCK_PRODUCTS: Product[] = [
       whatIfIDontUseIt: 'You can upgrade to ESP32 for Bluetooth support and additional GPIO pins.',
       realLifeApplications: ['Smart Wi-Fi plugs', 'Basic cloud temperature loggers'],
       alternativeComponents: ['ESP32 (₹350)', 'Arduino Nano + ESP-01 (₹300)']
+    },
+    videoTutorial: {
+      title: 'ESP8266 NodeMCU Crash Course & Cloud WebServer',
+      youtubeId: 'qZf26pU8u_Y',
+      duration: '7:20 mins',
+      instructor: 'Inception Electronics Faculty',
+      description: 'Setting up NodeMCU ESP8266 with GPIO mapping (D0-D8 to GPIO numbers) and hosting a local web page.',
+      keyTimestamps: [
+        { time: '0:00', topic: 'NodeMCU D-Pin to GPIO Translation Map' },
+        { time: '2:30', topic: 'Flashing via Micro-USB with CH340 Driver' },
+        { time: '5:10', topic: 'Serving an HTML Dashboard on Campus LAN' },
+      ],
     }
   },
   {
@@ -78,6 +103,19 @@ export const MOCK_PRODUCTS: Product[] = [
         'Smart kitchen gas cutoff valves'
       ],
       alternativeComponents: ['MQ-135 Air Quality Sensor (₹190)', 'MQ-7 CO Sensor (₹200)']
+    },
+    videoTutorial: {
+      title: 'MQ-2 Gas & Smoke Sensor Complete Interfacing Guide',
+      youtubeId: 'r53m6x_J40k',
+      duration: '6:15 mins',
+      instructor: 'Dr. Ananya Sen (Sensors & Instrumentation)',
+      description: 'Understanding heater coil preheat, reading Analog A0 voltage PPM curves, and calibrating the onboard potentiometer for Digital D0 trigger.',
+      keyTimestamps: [
+        { time: '0:00', topic: 'How SnO2 Gas Sensing Chemistry Works' },
+        { time: '1:45', topic: 'Wiring MQ-2 to ESP32 / Arduino (5V Power Rail)' },
+        { time: '3:20', topic: 'Reading Raw ADC Values vs Calculating PPM' },
+        { time: '4:50', topic: 'Triggering Buzzer Alarm on Smoke Detection' },
+      ],
     }
   },
   {
@@ -100,6 +138,19 @@ export const MOCK_PRODUCTS: Product[] = [
       whatIfIDontUseIt: 'You will lack temperature and humidity telemetry.',
       realLifeApplications: ['Automated climate control in greenhouses', 'Cold storage warehouse monitoring', 'Personal desktop weather displays'],
       alternativeComponents: ['DHT22 High Precision (₹280)', 'BME280 Pressure+Temp+Humidity (₹320)']
+    },
+    videoTutorial: {
+      title: 'DHT11 Sensor: Wiring, Single-Wire Protocol & Arduino/ESP32 Code',
+      youtubeId: '3uFzK8GZ44o',
+      duration: '5:40 mins',
+      instructor: 'Inception Embedded Systems Lab',
+      description: 'Step-by-step video tutorial demonstrating the DHT11 3-pin and 4-pin module wiring, pull-up resistor requirement, and reading live temperature/humidity.',
+      keyTimestamps: [
+        { time: '0:00', topic: 'DHT11 vs DHT22 Accuracy Comparison' },
+        { time: '1:30', topic: 'Pin Connections: VCC, GND, and DATA Pin' },
+        { time: '3:10', topic: 'Installing Adafruit DHT Sensor Library' },
+        { time: '4:25', topic: 'Fixing "Failed to read from DHT sensor" Errors' },
+      ],
     }
   },
   {
@@ -124,6 +175,18 @@ export const MOCK_PRODUCTS: Product[] = [
       whatIfIDontUseIt: 'You would use Arduino Uno or ESP32 instead.',
       realLifeApplications: ['Robotic motor controllers', 'Custom USB gamepads', 'Automated water level switches'],
       alternativeComponents: ['Arduino Uno R3 (₹420)', 'Arduino Pro Mini (₹180)']
+    },
+    videoTutorial: {
+      title: 'Arduino Nano V3.0 Pinout & CH340 Driver Troubleshooting',
+      youtubeId: '7mQh08c4Pvg',
+      duration: '6:30 mins',
+      instructor: 'Inception Embedded Systems Lab',
+      description: 'Understanding the 14 Digital IO, 8 Analog Input pins, selecting "Old Bootloader" in Arduino IDE, and flashing test sketches.',
+      keyTimestamps: [
+        { time: '0:00', topic: 'Nano Pinout & 5V vs 3V3 Pin Headers' },
+        { time: '2:10', topic: 'Fixing "avrdude: stk500_recv(): programmer is not responding"' },
+        { time: '4:15', topic: 'Testing Analog Readings on A0-A7' },
+      ],
     }
   },
   {
@@ -146,6 +209,18 @@ export const MOCK_PRODUCTS: Product[] = [
       whatIfIDontUseIt: 'You will not be able to physically open valves, turn solar panels, or actuate robotic arms.',
       realLifeApplications: ['Smart door lock deadbolts', 'Solar panel tracking mounts', 'Robotic gripper arms'],
       alternativeComponents: ['MG996R Metal Gear Servo (₹290)']
+    },
+    videoTutorial: {
+      title: 'SG90 Micro Servo Control with PWM Signal & Sweep Code',
+      youtubeId: 'kUHmYKWwuWs',
+      duration: '4:50 mins',
+      instructor: 'Robotics & Actuation Dept',
+      description: 'Learn Brown (GND), Red (VCC 5V), and Orange (PWM Signal) wiring, preventing servo jitter, and controlling exact angles 0-180 degrees.',
+      keyTimestamps: [
+        { time: '0:00', topic: 'Color-Coded Wire Pinout (Brown/Red/Orange)' },
+        { time: '1:30', topic: 'PWM Timing: 1ms (0°), 1.5ms (90°), 2ms (180°)' },
+        { time: '3:05', topic: 'Arduino Servo.h Library & Sweep Example' },
+      ],
     }
   },
   {
@@ -169,6 +244,18 @@ export const MOCK_PRODUCTS: Product[] = [
       whatIfIDontUseIt: 'You can use serial monitor over USB or 16x2 character LCD display.',
       realLifeApplications: ['Wearable fitness monitors', 'Portable medical meters', 'Smart watch dashboards'],
       alternativeComponents: ['16x2 LCD with I2C (₹190)', '0.96 inch SPI Display (₹210)']
+    },
+    videoTutorial: {
+      title: '0.96" I2C OLED (SSD1306) Setup, Graphics & Live Graphs',
+      youtubeId: 'Jg7hZ29oG-o',
+      duration: '7:15 mins',
+      instructor: 'Inception Embedded Systems Lab',
+      description: 'I2C Scanner tool, Adafruit_SSD1306 and Adafruit_GFX libraries, rendering custom text fonts, and drawing real-time sensor graphs.',
+      keyTimestamps: [
+        { time: '0:00', topic: 'Finding I2C Address (0x3C vs 0x3D)' },
+        { time: '2:00', topic: 'Wiring SDA & SCL to Microcontroller' },
+        { time: '4:20', topic: 'Drawing Sensor Telemetry & Progress Bars' },
+      ],
     }
   },
   {
@@ -191,6 +278,18 @@ export const MOCK_PRODUCTS: Product[] = [
       whatIfIDontUseIt: 'Your project cannot sense distance or liquid level height non-contact.',
       realLifeApplications: ['Automotive reversing sensors', 'Robotic obstacle avoidance', 'Water tank depth monitors'],
       alternativeComponents: ['VL53L0X Laser ToF Sensor (₹260)']
+    },
+    videoTutorial: {
+      title: 'HC-SR04 Ultrasonic Sensor Timing & Distance Calculation',
+      youtubeId: 'ZejQOX69K5M',
+      duration: '5:10 mins',
+      instructor: 'Prof. S. Ranganathan (Instrumentation)',
+      description: 'Learn Trig pulse timing, measuring Echo pulse duration using pulseIn(), and converting sound wave flight time to centimeters and inches.',
+      keyTimestamps: [
+        { time: '0:00', topic: 'Transmitter (T) and Receiver (R) Physics' },
+        { time: '1:45', topic: 'Trig 10µs High Trigger & Echo Math' },
+        { time: '3:30', topic: 'Obstacle Detection & Buzzer Distance Thresholds' },
+      ],
     }
   },
   {

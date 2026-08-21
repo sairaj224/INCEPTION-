@@ -1,11 +1,11 @@
 import React from 'react';
-import { Sparkles, ShoppingBag, Compass, BookOpen, Users, ShieldCheck, CheckCircle2, Settings2, UserCheck, ShieldAlert, User, HelpCircle, Heart, LogIn, Sun, Moon } from 'lucide-react';
+import { Sparkles, ShoppingBag, Compass, BookOpen, Users, ShieldCheck, CheckCircle2, Settings2, UserCheck, ShieldAlert, User, HelpCircle, Heart, LogIn, Sun, Moon, GraduationCap } from 'lucide-react';
 import { UserProfile } from '../types';
 import { InceptionLogo } from './InceptionLogo';
 
 interface HeaderProps {
-  activeTab: 'projects' | 'marketplace';
-  setActiveTab: (tab: 'projects' | 'marketplace') => void;
+  activeTab: 'projects' | 'marketplace' | 'learn';
+  setActiveTab: (tab: 'projects' | 'marketplace' | 'learn') => void;
   cartCount: number;
   onOpenCart: () => void;
   onOpenFinder: () => void;
@@ -84,6 +84,21 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <BookOpen className="w-4 h-4" />
               <span>Store</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('learn')}
+              className={`flex items-center space-x-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                activeTab === 'learn'
+                  ? 'bg-indigo-600 text-white shadow-sm font-semibold ring-1 ring-indigo-400'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+              }`}
+            >
+              <GraduationCap className="w-4 h-4 text-indigo-400" />
+              <span>Learning Hub</span>
+              <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                New
+              </span>
             </button>
           </nav>
 
@@ -261,6 +276,15 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <BookOpen className="w-4 h-4 mb-0.5" />
             <span>Store</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('learn')}
+            className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
+              activeTab === 'learn' ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <GraduationCap className="w-4 h-4 mb-0.5" />
+            <span>Learn</span>
           </button>
         </div>
       </div>

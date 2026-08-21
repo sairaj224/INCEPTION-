@@ -1,21 +1,75 @@
 {
   "entities": {
-    "products": {
-      "title": "Products",
-      "description": "Hardware store product inventory",
+    "users": {
+      "title": "Users",
+      "description": "Student buyers and verified college users personal details and addresses",
+      "type": "object",
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
-        "domain": { "type": "string" },
+        "email": { "type": "string" },
+        "emailVerified": { "type": "boolean" },
+        "phone": { "type": "string" },
+        "alternatePhone": { "type": "string" },
+        "collegeName": { "type": "string" },
+        "department": { "type": "string" },
+        "yearOrRollNo": { "type": "string" },
+        "hostelAddress": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "pinCode": { "type": "string" },
+        "landmark": { "type": "string" },
+        "savedAddresses": { "type": "array" },
+        "role": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "email", "name", "phone"]
+    },
+    "orders": {
+      "title": "Orders",
+      "description": "Hardware and component purchase order records",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "buyer": { "type": "object" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "kitFee": { "type": "number" },
+        "discount": { "type": "number" },
+        "grandTotal": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "status": { "type": "string" },
+        "ownerNotes": { "type": "string" },
+        "cancellationReason": { "type": "string" },
+        "cancelledBy": { "type": "string" },
+        "returnRequest": { "type": "object" }
+      },
+      "required": ["orderId", "createdAt", "buyer", "items", "grandTotal", "status"]
+    },
+    "products": {
+      "title": "Products",
+      "description": "Hardware store product inventory and component technical guides",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
         "category": { "type": "string" },
+        "subcategory": { "type": "string" },
         "price": { "type": "number" },
-        "mrp": { "type": "number" },
-        "rating": { "type": "number" },
-        "reviews": { "type": "number" },
-        "stock": { "type": "number" },
         "image": { "type": "string" },
-        "shortDescription": { "type": "string" }
-      }
+        "description": { "type": "string" },
+        "inStock": { "type": "boolean" },
+        "specs": { "type": "object" },
+        "detailGuide": { "type": "object" },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "reviews": { "type": "array" }
+      },
+      "required": ["id", "name", "category", "price"]
     }
   }
 }

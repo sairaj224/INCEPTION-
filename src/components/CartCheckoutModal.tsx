@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CartItem, UserProfile, PlacedOrder } from '../types';
-import { X, Trash2, CheckCircle2, ArrowRight, Sparkles, Loader2, CreditCard, User, Phone, MapPin, Building, GraduationCap, Banknote, ShieldCheck, Plus, Minus, Tag, HelpCircle, Ban } from 'lucide-react';
+import { X, Trash2, CheckCircle2, ArrowRight, Sparkles, Loader2, CreditCard, User, Phone, MapPin, Building, GraduationCap, Banknote, ShieldCheck, Plus, Minus, Tag, HelpCircle, Ban, Mail } from 'lucide-react';
 
 interface CartCheckoutModalProps {
   isOpen: boolean;
@@ -31,6 +31,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
   onCancelOrder,
   onOpenBuyerLogin,
 }) => {
+  const isGuest = !userProfile?.isLoggedIn;
   const [step, setStep] = useState<'cart' | 'contact' | 'payment' | 'confirmation'>('cart');
   const [addPrintedKit, setAddPrintedKit] = useState<boolean>(true);
   const [paymentMethod] = useState<string>('Cash on Delivery (COD)');
@@ -44,15 +45,37 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; type: 'flat' | 'percent' | 'freekit' } | null>(null);
   const [couponError, setCouponError] = useState<string>('');
 
-  // Editable Contact State for order confirmation
-  const [isGuest, setIsGuest] = useState<boolean>(!userProfile.isLoggedIn);
-  const [buyerName, setBuyerName] = useState<string>(userProfile.name || 'Rahul Sharma');
-  const [buyerEmail, setBuyerEmail] = useState<string>(userProfile.email || 'rahul.sharma@iitb.ac.in');
-  const [buyerPhone, setBuyerPhone] = useState<string>(userProfile.phone || '+91 98765 43210');
-  const [collegeName, setCollegeName] = useState<string>(userProfile.collegeName || 'IIT Bombay');
-  const [department, setDepartment] = useState<string>(userProfile.department || 'Electronics & Telecommunication');
-  const [yearOrRollNo, setYearOrRollNo] = useState<string>(userProfile.yearOrRollNo || '210040089 (3rd Year)');
-  const [hostelAddress, setHostelAddress] = useState<string>(userProfile.hostelAddress || 'Hostel 14, Room 208, Main Campus');
+  // Contact & Address Details
+  const [buyerName, setBuyerName] = useState<string>(userProfile?.name && userProfile.name !== 'Guest Visitor' ? userProfile.name : '');
+  const [buyerEmail, setBuyerEmail] = useState<string>(userProfile?.email || '');
+  const [buyerPhone, setBuyerPhone] = useState<string>(userProfile?.phone || '');
+  const [alternatePhone, setAlternatePhone] = useState<string>(userProfile?.alternatePhone || '');
+  const [collegeName, setCollegeName] = useState<string>(userProfile?.collegeName || '');
+  const [department, setDepartment] = useState<string>(userProfile?.department || '');
+  const [yearOrRollNo, setYearOrRollNo] = useState<string>(userProfile?.yearOrRollNo || '');
+  const [hostelAddress, setHostelAddress] = useState<string>(userProfile?.hostelAddress || '');
+  const [city, setCity] = useState<string>(userProfile?.city || '');
+  const [stateName, setStateName] = useState<string>(userProfile?.state || '');
+  const [pinCode, setPinCode] = useState<string>(userProfile?.pinCode || '');
+  const [landmark, setLandmark] = useState<string>(userProfile?.landmark || '');
+
+  // Keep state synchronized when user profile changes
+  React.useEffect(() => {
+    if (userProfile?.isLoggedIn) {
+      if (userProfile.name && userProfile.name !== 'Guest Visitor') setBuyerName(userProfile.name);
+      if (userProfile.email) setBuyerEmail(userProfile.email);
+      if (userProfile.phone) setBuyerPhone(userProfile.phone);
+      if (userProfile.alternatePhone) setAlternatePhone(userProfile.alternatePhone);
+      if (userProfile.collegeName) setCollegeName(userProfile.collegeName);
+      if (userProfile.department) setDepartment(userProfile.department);
+      if (userProfile.yearOrRollNo) setYearOrRollNo(userProfile.yearOrRollNo);
+      if (userProfile.hostelAddress) setHostelAddress(userProfile.hostelAddress);
+      if (userProfile.city) setCity(userProfile.city);
+      if (userProfile.state) setStateName(userProfile.state);
+      if (userProfile.pinCode) setPinCode(userProfile.pinCode);
+      if (userProfile.landmark) setLandmark(userProfile.landmark);
+    }
+  }, [userProfile]);
 
   if (!isOpen) return null;
 
@@ -87,47 +110,78 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
     }
   };
 
-  const handlePay = () => {
+  const handlePay = async () => {
     setProcessing(true);
     const newOrderId = 'INCP-' + Math.floor(100000 + Math.random() * 900000);
 
-    setTimeout(() => {
+    // Create new order record
+    const newOrder: PlacedOrder = {
+      orderId: newOrderId,
+      userId: userProfile?.id || `usr-${buyerEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+      userEmail: buyerEmail.trim().toLowerCase(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      buyer: {
+        name: buyerName.trim() || 'Student Buyer',
+        email: buyerEmail.trim().toLowerCase(),
+        phone: buyerPhone.trim(),
+        alternatePhone: alternatePhone.trim() || undefined,
+        collegeName: collegeName.trim() || 'College Institute',
+        department: department.trim() || 'Engineering Dept',
+        yearOrRollNo: yearOrRollNo.trim() || 'Student',
+        hostelAddress: hostelAddress.trim(),
+        city: city.trim() || undefined,
+        state: stateName.trim() || undefined,
+        pinCode: pinCode.trim() || undefined,
+        landmark: landmark.trim() || undefined,
+      },
+      items: cartItems.map((ci) => ({
+        productId: ci.product.id,
+        productName: ci.product.name,
+        price: ci.product.price,
+        quantity: ci.quantity,
+        image: ci.product.image,
+      })),
+      subtotal: rawSubtotal,
+      kitFee,
+      discount: studentDiscount + couponDiscount,
+      grandTotal,
+      paymentMethod,
+      status: 'Pending Confirmation',
+    };
+
+    setTimeout(async () => {
+      try {
+        const { saveOrderToFirestore, saveUserToFirestore } = await import('../lib/firebase');
+        await saveOrderToFirestore(newOrder);
+        
+        if (userProfile?.isLoggedIn) {
+          await saveUserToFirestore({
+            ...userProfile,
+            name: buyerName.trim() || userProfile.name,
+            phone: buyerPhone.trim() || userProfile.phone,
+            alternatePhone: alternatePhone.trim() || userProfile.alternatePhone,
+            collegeName: collegeName.trim() || userProfile.collegeName,
+            department: department.trim() || userProfile.department,
+            yearOrRollNo: yearOrRollNo.trim() || userProfile.yearOrRollNo,
+            hostelAddress: hostelAddress.trim() || userProfile.hostelAddress,
+            city: city.trim() || userProfile.city,
+            state: stateName.trim() || userProfile.state,
+            pinCode: pinCode.trim() || userProfile.pinCode,
+            landmark: landmark.trim() || userProfile.landmark,
+          });
+        }
+      } catch (err) {
+        console.warn('Order cloud save error:', err);
+      }
+
       setProcessing(false);
       setOrderId(newOrderId);
-
-      // Create new order record
-      const newOrder: PlacedOrder = {
-        orderId: newOrderId,
-        createdAt: new Date().toLocaleString(),
-        buyer: {
-          name: buyerName.trim() || 'Student Buyer',
-          email: buyerEmail.trim() || 'buyer@college.edu',
-          phone: buyerPhone.trim() || '+91 98765 43210',
-          collegeName: collegeName.trim() || 'College Institute',
-          department: department.trim() || 'Engineering Dept',
-          yearOrRollNo: yearOrRollNo.trim() || '2024-STUDENT',
-          hostelAddress: hostelAddress.trim() || 'Campus Hostel',
-        },
-        items: cartItems.map((ci) => ({
-          productId: ci.product.id,
-          productName: ci.product.name,
-          price: ci.product.price,
-          quantity: ci.quantity,
-          image: ci.product.image,
-        })),
-        subtotal: rawSubtotal,
-        kitFee,
-        discount: studentDiscount,
-        grandTotal,
-        paymentMethod,
-        status: 'Pending Confirmation',
-      };
-
       onPlaceOrder(newOrder);
       setPlacedItems([...cartItems]);
       setStep('confirmation');
       onClearCart();
-    }, 2000);
+    }, 1200);
   };
 
   return (
@@ -502,28 +556,26 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
             </div>
 
             {/* Saved Address Shortcuts */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-700 flex items-center space-x-1">
-                <MapPin className="w-3.5 h-3.5 text-blue-600" />
-                <span>Select from Saved Addresses:</span>
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {(userProfile.savedAddresses || [
-                  { id: 'addr-1', label: 'Hostel 14, Room 208', address: 'Hostel 14, Room 208, IIT Campus' },
-                  { id: 'addr-2', label: 'Robotics Hardware Lab 3', address: 'Robotics & Automation Lab, ECE Dept, Building B' },
-                  { id: 'addr-3', label: 'Hostel 9 Gate Handoff', address: 'Hostel 9 Security Gate Handoff Counter' },
-                ]).map((saved) => (
-                  <button
-                    key={saved.id}
-                    type="button"
-                    onClick={() => setHostelAddress(saved.address)}
-                    className="px-3 py-1.5 bg-slate-100 hover:bg-blue-50 border border-slate-200 hover:border-blue-400 text-slate-800 font-semibold rounded-lg text-xs flex items-center space-x-1 transition-all"
-                  >
-                    <span>📍 {saved.label}</span>
-                  </button>
-                ))}
+            {userProfile?.savedAddresses && userProfile.savedAddresses.length > 0 && (
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-slate-700 flex items-center space-x-1">
+                  <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Select from Your Saved Addresses:</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {userProfile.savedAddresses.map((saved) => (
+                    <button
+                      key={saved.id}
+                      type="button"
+                      onClick={() => setHostelAddress(saved.address)}
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-blue-50 border border-slate-200 hover:border-blue-400 text-slate-800 font-semibold rounded-lg text-xs flex items-center space-x-1 transition-all"
+                    >
+                      <span>📍 {saved.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
@@ -536,7 +588,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
                   required
                   value={buyerName}
                   onChange={(e) => setBuyerName(e.target.value)}
-                  placeholder="e.g. Rahul Sharma"
+                  placeholder="e.g. Sairaj Achari"
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
                 />
               </div>
@@ -544,7 +596,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
               <div>
                 <label className="block font-semibold text-slate-700 mb-1 flex items-center space-x-1">
                   <Phone className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Phone Number (Call/WhatsApp) *</span>
+                  <span>Primary Phone (Call/WhatsApp) *</span>
                 </label>
                 <input
                   type="tel"
@@ -557,13 +609,31 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Email Address *</label>
+                <label className="block font-semibold text-slate-700 mb-1 flex items-center space-x-1">
+                  <Phone className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Alternative Phone Number / Emergency Contact *</span>
+                </label>
+                <input
+                  type="tel"
+                  required
+                  value={alternatePhone}
+                  onChange={(e) => setAlternatePhone(e.target.value)}
+                  placeholder="e.g. +91 91234 56789 (Hostel room / friend)"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800 font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1 flex items-center space-x-1">
+                  <Mail className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Email Address *</span>
+                </label>
                 <input
                   type="email"
                   required
                   value={buyerEmail}
                   onChange={(e) => setBuyerEmail(e.target.value)}
-                  placeholder="e.g. rahul@college.edu"
+                  placeholder="e.g. buyer@college.edu"
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
                 />
               </div>
@@ -571,14 +641,13 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
               <div>
                 <label className="block font-semibold text-slate-700 mb-1 flex items-center space-x-1">
                   <Building className="w-3.5 h-3.5 text-blue-600" />
-                  <span>College Name *</span>
+                  <span>College Name</span>
                 </label>
                 <input
                   type="text"
-                  required
                   value={collegeName}
                   onChange={(e) => setCollegeName(e.target.value)}
-                  placeholder="e.g. IIT Bombay"
+                  placeholder="e.g. IIT Bombay / University Campus"
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
                 />
               </div>
@@ -586,32 +655,77 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
               <div>
                 <label className="block font-semibold text-slate-700 mb-1 flex items-center space-x-1">
                   <GraduationCap className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Department & Year / Roll No *</span>
+                  <span>Department & Year / Roll No</span>
                 </label>
                 <input
                   type="text"
-                  required
                   value={yearOrRollNo}
                   onChange={(e) => setYearOrRollNo(e.target.value)}
-                  placeholder="e.g. 210040089 (3rd Year ECE)"
+                  placeholder="e.g. 3rd Year ECE / Roll 2024-089"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1 flex items-center space-x-1">
+                <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                <span>Campus / Hostel / Delivery Address *</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={hostelAddress}
+                onChange={(e) => setHostelAddress(e.target.value)}
+                placeholder="e.g. Hostel 14, Room 208, Main Campus / Flat 402"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">City</label>
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="e.g. Mumbai"
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1 flex items-center space-x-1">
-                  <MapPin className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Campus / Hostel Address *</span>
-                </label>
+                <label className="block font-semibold text-slate-700 mb-1">State</label>
                 <input
                   type="text"
-                  required
-                  value={hostelAddress}
-                  onChange={(e) => setHostelAddress(e.target.value)}
-                  placeholder="e.g. Hostel 14, Room 208, Main Campus"
+                  value={stateName}
+                  onChange={(e) => setStateName(e.target.value)}
+                  placeholder="e.g. Maharashtra"
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
                 />
               </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">PIN / Postal Code</label>
+                <input
+                  type="text"
+                  value={pinCode}
+                  onChange={(e) => setPinCode(e.target.value)}
+                  placeholder="e.g. 400076"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 mb-1">Landmark / Delivery Instructions</label>
+              <input
+                type="text"
+                value={landmark}
+                onChange={(e) => setLandmark(e.target.value)}
+                placeholder="e.g. Opposite robotics lab / Hostel security gate"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
+              />
             </div>
 
             <div className="flex justify-between items-center pt-3 border-t border-slate-200">

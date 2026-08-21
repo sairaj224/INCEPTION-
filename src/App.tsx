@@ -25,11 +25,12 @@ import { SitemapModal } from './components/SitemapModal';
 import { ErrorLogModal } from './components/ErrorLogModal';
 import { SupabaseModal } from './components/SupabaseModal';
 import { Footer } from './components/Footer';
+import { LearningHubMain } from './components/LearningHub/LearningHubMain';
 import { CookiePreferences } from './types';
 import { AppLogger } from './lib/logger';
 import { createSlug, updateProductSchemaJsonLd } from './lib/seo';
-import { subscribeToProducts, syncAllProductsToFirestore, seedProductsToFirestoreIfEmpty } from './lib/firebase';
-import { isSupabaseConfigured, fetchSupabaseProducts, fetchSupabaseProjects, saveSupabaseProduct, saveSupabaseProject, createSupabaseOrder } from './lib/supabase';
+import { subscribeToProducts, syncAllProductsToFirestore, seedProductsToFirestoreIfEmpty, subscribeToUserOrders, subscribeToAllOrders } from './lib/firebase';
+import { isSupabaseConfigured, fetchSupabaseProducts, fetchSupabaseProjects, saveSupabaseProduct, saveSupabaseProject, createSupabaseOrder, saveSupabaseUserProfile } from './lib/supabase';
 import { Search, Sparkles, Filter, IndianRupee, Cpu, ShieldAlert, User, LogIn, UserCheck, Database } from 'lucide-react';
 
 const PRODUCTS_STORAGE_KEY = 'inception_college_products';
@@ -42,37 +43,8 @@ const ADMIN_AUTH_STORAGE_KEY = 'inception_admin_authenticated';
 const COOKIES_STORAGE_KEY = 'inception_cookie_preferences';
 const THEME_STORAGE_KEY = 'inception_theme_preference';
 
-// Sample Initial Order for Store Owner Testing
-const SAMPLE_INITIAL_ORDERS: PlacedOrder[] = [
-  {
-    orderId: 'INCP-849201',
-    createdAt: new Date().toLocaleString(),
-    buyer: {
-      name: 'Rahul Sharma',
-      email: 'rahul.sharma@iitb.ac.in',
-      phone: '+91 98765 43210',
-      collegeName: 'IIT Bombay',
-      department: 'Electronics & Electrical Engg',
-      yearOrRollNo: '210040089 (3rd Year)',
-      hostelAddress: 'Hostel 14, Room 208, Campus',
-    },
-    items: [
-      { productId: 'prod-esp32', productName: 'ESP32 Wi-Fi & Bluetooth MCU', price: 450, quantity: 1 },
-      { productId: 'prod-mq2', productName: 'MQ-2 Gas Sensor Module', price: 180, quantity: 1 },
-      { productId: 'prod-breadboard', productName: 'Solderless Breadboard 830 Points', price: 120, quantity: 1 },
-    ],
-    subtotal: 750,
-    kitFee: 99,
-    discount: 75,
-    grandTotal: 774,
-    paymentMethod: 'Cash on Delivery (COD)',
-    status: 'Pending Confirmation',
-    ownerNotes: 'Called student on WhatsApp, confirmed delivery at Hostel 14 gate.',
-  },
-];
-
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'projects' | 'marketplace'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'marketplace' | 'learn'>('projects');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
@@ -131,39 +103,47 @@ export default function App() {
       const saved = localStorage.getItem(PROFILE_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed && parsed.name) return parsed;
+        if (parsed && parsed.name && parsed.isLoggedIn) return parsed;
       }
     } catch (e) {
       console.error('Failed to load saved profile', e);
     }
     return {
-      id: 'usr-guest',
-      name: 'Guest Visitor',
+      id: '',
+      name: '',
       email: '',
       phone: '',
-      collegeName: 'IIT Bombay',
-      department: 'Electronics & Electrical Engg',
+      collegeName: '',
+      department: '',
       yearOrRollNo: '',
       hostelAddress: '',
       isLoggedIn: false,
     };
   });
 
-  // Placed Orders State with localStorage persistence
+  // Placed Orders State with localStorage persistence & Firestore syncing
   const [orders, setOrders] = useState<PlacedOrder[]>(() => {
     try {
       const saved = localStorage.getItem(ORDERS_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed;
         }
       }
     } catch (e) {
       console.error('Failed to load saved orders', e);
     }
-    return SAMPLE_INITIAL_ORDERS;
+    return [];
   });
+
+  // Pending action after auth (e.g. user clicked Add to Cart or Buy Now before logging in)
+  const [pendingAuthAction, setPendingAuthAction] = useState<{
+    type: 'addToCart' | 'buyNow' | 'addBom';
+    product?: Product;
+    quantity?: number;
+    items?: { product: Product; quantity: number }[];
+  } | null>(null);
 
   // Cart & Owned Components State
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -244,8 +224,12 @@ export default function App() {
     updateProductSchemaJsonLd(products);
   }, [products]);
 
+  // Real-time sync for products from Firestore
   useEffect(() => {
-    seedProductsToFirestoreIfEmpty(MOCK_PRODUCTS);
+    seedProductsToFirestoreIfEmpty(MOCK_PRODUCTS).catch((err) => {
+      console.warn('Firestore initial seeding warning:', err);
+    });
+
     const unsubscribe = subscribeToProducts((firestoreProducts) => {
       if (firestoreProducts && firestoreProducts.length > 0) {
         setProducts(firestoreProducts);
@@ -254,20 +238,52 @@ export default function App() {
 
     // Supabase load on mount if configured
     if (isSupabaseConfigured()) {
-      fetchSupabaseProducts().then((supProds) => {
-        if (supProds && supProds.length > 0) {
-          setProducts(supProds);
-        }
-      });
-      fetchSupabaseProjects().then((supProjs) => {
-        if (supProjs && supProjs.length > 0) {
-          setProjects(supProjs);
-        }
-      });
+      fetchSupabaseProducts()
+        .then((supProds) => {
+          if (supProds && supProds.length > 0) {
+            setProducts(supProds);
+          }
+        })
+        .catch((err) => {
+          console.warn('Supabase products fetch warning:', err);
+        });
+
+      fetchSupabaseProjects()
+        .then((supProjs) => {
+          if (supProjs && supProjs.length > 0) {
+            setProjects(supProjs);
+          }
+        })
+        .catch((err) => {
+          console.warn('Supabase projects fetch warning:', err);
+        });
     }
 
-    return () => unsubscribe();
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
   }, []);
+
+  // Real-time sync for orders from Firestore based on logged-in user or store owner role
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    if (userRole === 'owner') {
+      unsubscribe = subscribeToAllOrders((allOrders) => {
+        if (allOrders) setOrders(allOrders);
+      });
+    } else if (userProfile.id && userProfile.isLoggedIn) {
+      unsubscribe = subscribeToUserOrders(userProfile.id, (userOrders) => {
+        if (userOrders) setOrders(userOrders);
+      });
+    }
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, [userProfile.id, userProfile.isLoggedIn, userRole]);
 
   const handleSaveCookiePreferences = (prefs: CookiePreferences) => {
     setCookiePreferences(prefs);
@@ -295,7 +311,7 @@ export default function App() {
       console.error(e);
     }
     setProducts(MOCK_PRODUCTS);
-    setOrders(SAMPLE_INITIAL_ORDERS);
+    setOrders([]);
     setWatchlistProjectIds(new Set(['proj-iot-env']));
     setWatchlistProductIds(new Set(['prod-esp32']));
     handleSaveCookiePreferences({
@@ -506,6 +522,9 @@ export default function App() {
   // Helper to persist profile
   const handleUpdateProfile = (updatedProfile: UserProfile) => {
     setUserProfile(updatedProfile);
+    if (isSupabaseConfigured()) {
+      saveSupabaseUserProfile(updatedProfile);
+    }
     if (updatedProfile.isLoggedIn) {
       setUserRole('student');
       setIsAdminAuthenticated(false);
@@ -630,6 +649,12 @@ export default function App() {
 
   // Add Item to Cart
   const handleAddToCart = (product: Product, quantity = 1) => {
+    if (!userProfile.isLoggedIn) {
+      setPendingAuthAction({ type: 'addToCart', product, quantity });
+      setBuyerLoginMessage('Please verify your email with OTP and complete your details to add components to your cart.');
+      setIsBuyerLoginOpen(true);
+      return;
+    }
     setCartItems((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
       if (existing) {
@@ -643,8 +668,22 @@ export default function App() {
 
   // Add Entire Filtered BOM to Cart
   const handleAddBomToCart = (items: { product: Product; quantity: number }[]) => {
+    if (!userProfile.isLoggedIn) {
+      setPendingAuthAction({ type: 'addBom', items });
+      setBuyerLoginMessage('Please verify your email with OTP and complete your details to add project kit to cart.');
+      setIsBuyerLoginOpen(true);
+      return;
+    }
     items.forEach((item) => {
-      handleAddToCart(item.product, item.quantity);
+      setCartItems((prev) => {
+        const existing = prev.find((i) => i.product.id === item.product.id);
+        if (existing) {
+          return prev.map((i) =>
+            i.product.id === item.product.id ? { ...i, quantity: i.quantity + item.quantity } : i
+          );
+        }
+        return [...prev, { product: item.product, quantity: item.quantity }];
+      });
     });
     setIsCartOpen(true);
   };
@@ -815,6 +854,12 @@ export default function App() {
               onBack={() => setSelectedProduct(null)}
               onAddToCart={(prod, qty) => handleAddToCart(prod, qty)}
               onBuyNow={(prod, qty) => {
+                if (!userProfile.isLoggedIn) {
+                  setPendingAuthAction({ type: 'buyNow', product: prod, quantity: qty });
+                  setBuyerLoginMessage('Please verify your email OTP and enter your delivery details to proceed to express checkout.');
+                  setIsBuyerLoginOpen(true);
+                  return;
+                }
                 handleAddToCart(prod, qty);
                 setIsCartOpen(true);
               }}
@@ -978,6 +1023,8 @@ export default function App() {
                 })}
               </div>
             </div>
+          ) : activeTab === 'learn' ? (
+            <LearningHubMain onBackToDashboard={() => setActiveTab('projects')} />
           ) : (
             <MarketplaceView
               products={products}
@@ -1088,19 +1135,57 @@ export default function App() {
       {/* Dedicated Buyer Login & Registration Modal */}
       <BuyerLoginModal
         isOpen={isBuyerLoginOpen}
-        onClose={() => setIsBuyerLoginOpen(false)}
+        onClose={() => {
+          setIsBuyerLoginOpen(false);
+          setPendingAuthAction(null);
+        }}
         userProfile={userProfile}
         onLoginSuccess={(updatedProfile) => {
           handleUpdateProfile(updatedProfile);
           setIsBuyerLoginOpen(false);
-          // Re-open cart if items exist so they can finish checkout
-          if (cartItems.length > 0) {
+          if (pendingAuthAction) {
+            if (pendingAuthAction.type === 'addToCart' && pendingAuthAction.product) {
+              const prod = pendingAuthAction.product;
+              const qty = pendingAuthAction.quantity || 1;
+              setCartItems((prev) => {
+                const existing = prev.find((i) => i.product.id === prod.id);
+                if (existing) {
+                  return prev.map((i) => (i.product.id === prod.id ? { ...i, quantity: i.quantity + qty } : i));
+                }
+                return [...prev, { product: prod, quantity: qty }];
+              });
+            } else if (pendingAuthAction.type === 'buyNow' && pendingAuthAction.product) {
+              const prod = pendingAuthAction.product;
+              const qty = pendingAuthAction.quantity || 1;
+              setCartItems((prev) => {
+                const existing = prev.find((i) => i.product.id === prod.id);
+                if (existing) {
+                  return prev.map((i) => (i.product.id === prod.id ? { ...i, quantity: i.quantity + qty } : i));
+                }
+                return [...prev, { product: prod, quantity: qty }];
+              });
+              setIsCartOpen(true);
+            } else if (pendingAuthAction.type === 'addBom' && pendingAuthAction.items) {
+              pendingAuthAction.items.forEach((item) => {
+                setCartItems((prev) => {
+                  const existing = prev.find((i) => i.product.id === item.product.id);
+                  if (existing) {
+                    return prev.map((i) => (i.product.id === item.product.id ? { ...i, quantity: i.quantity + item.quantity } : i));
+                  }
+                  return [...prev, { product: item.product, quantity: item.quantity }];
+                });
+              });
+              setIsCartOpen(true);
+            }
+            setPendingAuthAction(null);
+          } else if (cartItems.length > 0) {
             setIsCartOpen(true);
           }
         }}
         contextualMessage={buyerLoginMessage}
         onContinueAsGuest={() => {
           setIsBuyerLoginOpen(false);
+          setPendingAuthAction(null);
           if (cartItems.length > 0) {
             setIsCartOpen(true);
           }
@@ -1196,11 +1281,19 @@ export default function App() {
       />
 
       {/* Bottom Right Floating AI Finder Button & Speech Bubble */}
-      <div className="fixed right-3 bottom-3 sm:right-5 sm:bottom-5 z-50 flex flex-col items-end group max-w-[calc(100vw-1.5rem)]">
+      <div
+        id="floating-ai-finder-container"
+        className={`fixed right-3 sm:right-5 z-40 flex flex-col items-end group max-w-[calc(100vw-1.5rem)] transition-all duration-300 ${
+          !cookiePreferences.hasConsented
+            ? 'bottom-28 sm:bottom-32 md:bottom-24'
+            : 'bottom-3 sm:bottom-5'
+        }`}
+      >
         {/* Message Speech Bubble Popup */}
         <div
+          id="floating-ai-finder-bubble"
           onClick={() => setIsFinderOpen(true)}
-          className="mb-1.5 max-w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-xl shadow-lg border border-cyan-300/60 cursor-pointer animate-bounce hover:scale-105 transition-all flex items-center space-x-1.5 relative z-50"
+          className="mb-1.5 max-w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-xl shadow-lg border border-cyan-300/60 cursor-pointer animate-bounce hover:scale-105 transition-all flex items-center space-x-1.5 relative z-40"
           title="Got ideas? Explore them here!"
         >
           <Sparkles className="w-3 h-3 text-cyan-200 fill-cyan-200 animate-pulse shrink-0" />
@@ -1211,8 +1304,9 @@ export default function App() {
 
         {/* Floating AI Finder Trigger Button (Compact Small Size) */}
         <button
+          id="floating-ai-finder-btn"
           onClick={() => setIsFinderOpen(true)}
-          className="flex items-center space-x-1.5 h-8 px-3 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:via-indigo-500 hover:to-cyan-500 text-white font-extrabold text-xs shadow-lg hover:shadow-cyan-500/30 border border-cyan-300/50 transition-all transform hover:scale-105 active:scale-95 group/btn"
+          className="flex items-center space-x-1.5 h-8 px-3 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:via-indigo-500 hover:to-cyan-500 text-white font-extrabold text-xs shadow-lg hover:shadow-cyan-500/30 border border-cyan-300/50 transition-all transform hover:scale-105 active:scale-95 group/btn cursor-pointer"
           title="Open AI Project Finder Assistant"
           aria-label="Open AI Finder"
         >

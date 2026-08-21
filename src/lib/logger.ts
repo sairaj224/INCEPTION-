@@ -37,15 +37,59 @@ export class AppLogger {
     message: string,
     details?: any
   ) {
+    const formatDetails = (det: any): string => {
+      if (det === undefined || det === null) return '';
+      if (typeof det === 'string') return det;
+      if (det instanceof Error) {
+        return JSON.stringify(
+          {
+            name: det.name,
+            message: det.message,
+            stack: det.stack,
+            cause: (det as any).cause,
+          },
+          null,
+          2
+        );
+      }
+      if (typeof det === 'object') {
+        try {
+          const cleanObj: Record<string, any> = {};
+          for (const key of Object.keys(det)) {
+            const val = det[key];
+            if (val instanceof Error) {
+              cleanObj[key] = {
+                name: val.name,
+                message: val.message,
+                stack: val.stack,
+              };
+            } else {
+              cleanObj[key] = val;
+            }
+          }
+          // If object had no own enumerable keys but was an error-like or non-empty
+          if (Object.keys(cleanObj).length === 0 && (det.message || det.name || det.stack)) {
+            cleanObj.message = det.message;
+            cleanObj.name = det.name;
+            cleanObj.stack = det.stack;
+          }
+          return JSON.stringify(cleanObj, null, 2);
+        } catch {
+          return String(det);
+        }
+      }
+      return String(det);
+    };
+
     const entry: LogEntry = {
       id: 'log-' + Math.random().toString(36).substring(2, 9),
       timestamp: new Date().toISOString(),
       level,
       category,
       message,
-      details: typeof details === 'object' ? JSON.stringify(details, null, 2) : String(details || ''),
-      userAgent: navigator.userAgent,
-      path: window.location.search || '/',
+      details: formatDetails(details),
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+      path: typeof window !== 'undefined' ? window.location.search || '/' : '/',
     };
 
     // Print to developer console
@@ -95,18 +139,37 @@ export class AppLogger {
     if (typeof window === 'undefined') return;
 
     window.onerror = (message, source, lineno, colno, error) => {
-      AppLogger.error('WindowUncaught', String(message), {
+      // Ignore benign script noise or resize observer loops
+      const msgStr = String(message || '');
+      if (msgStr.includes('ResizeObserver loop') || msgStr.includes('Script error')) {
+        return;
+      }
+
+      AppLogger.error('WindowUncaught', msgStr, {
         source,
         line: lineno,
         col: colno,
+        message: error?.message || msgStr,
         stack: error?.stack,
       });
     };
 
     window.onunhandledrejection = (event) => {
-      AppLogger.error('UnhandledPromise', event.reason?.message || 'Promise Rejected', {
-        reason: event.reason,
-      });
+      const reason = event.reason;
+      // If reason is empty or null or cancelled, ignore
+      if (!reason) return;
+
+      const reasonMsg =
+        typeof reason === 'string'
+          ? reason
+          : reason?.message || (typeof reason === 'object' && Object.keys(reason).length > 0 ? JSON.stringify(reason) : 'Promise Rejection');
+
+      // Ignore benign vite websocket disconnection notices
+      if (reasonMsg.includes('failed to connect to websocket') || reasonMsg.includes('WebSocket')) {
+        return;
+      }
+
+      AppLogger.warn('UnhandledPromise', reasonMsg, reason);
     };
   }
 }
