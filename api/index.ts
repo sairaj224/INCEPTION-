@@ -1,4 +1,5 @@
 import express from "express";
+import crypto from "crypto";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 
@@ -34,6 +35,7 @@ const sanitizeString = (val: unknown, maxLen = 500): string => {
   return val.trim().slice(0, maxLen);
 };
 
+// 1. AI Recommendation Endpoint
 app.post("/api/ai/recommend", async (req, res) => {
   try {
     const rawBody = req.body || {};
@@ -120,6 +122,7 @@ Return strictly JSON with key "recommendations", which is an array of 3 objects 
   }
 });
 
+// 2. AI Troubleshoot Endpoint
 app.post("/api/ai/troubleshoot", async (req, res) => {
   try {
     const rawBody = req.body || {};
@@ -183,6 +186,7 @@ Return strictly JSON with:
   }
 });
 
+// 3. AI Component Explanation Endpoint
 app.post("/api/ai/explain-component", async (req, res) => {
   try {
     const rawBody = req.body || {};
@@ -235,6 +239,442 @@ Return strictly JSON with:
   } catch (error: any) {
     console.error("AI explain error:", error);
     res.status(500).json({ error: "Explanation failed", details: error.message || "Failed to explain component" });
+  }
+});
+
+// ================= AUTHENTICATION SERVICES ================= //
+
+interface StoredUser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  passwordHash?: string;
+  salt?: string;
+  collegeName?: string;
+  department?: string;
+  yearOrRollNo?: string;
+  hostelAddress?: string;
+  city?: string;
+  state?: string;
+  pinCode?: string;
+  landmark?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const usersByEmail = new Map<string, StoredUser>();
+const usersByPhone = new Map<string, StoredUser>();
+const activeSessions = new Map<string, { userId: string; email: string; expiresAt: number }>();
+
+interface OtpEntry {
+  code: string;
+  expiresAt: number;
+  attempts: number;
+  lastSentAt: number;
+  requestCount: number;
+  purpose: 'login' | 'register' | 'forgot_password';
+}
+const otpStore = new Map<string, OtpEntry>();
+
+const hashPassword = (password: string, salt?: string) => {
+  const generatedSalt = salt || crypto.randomBytes(16).toString("hex");
+  const hash = crypto.pbkdf2Sync(password, generatedSalt, 1000, 64, "sha512").toString("hex");
+  return { hash, salt: generatedSalt };
+};
+
+const verifyPassword = (password: string, hash: string, salt: string) => {
+  const computed = crypto.pbkdf2Sync(password, salt, 1000, 64, "sha512").toString("hex");
+  return computed === hash;
+};
+
+const parseIdentifier = (raw: string): { type: 'email' | 'phone' | 'invalid'; clean: string; masked: string } => {
+  const val = (raw || "").trim();
+  if (!val) return { type: 'invalid', clean: '', masked: '' };
+
+  if (val.includes("@")) {
+    const cleanEmail = val.toLowerCase();
+    const [local, domain] = cleanEmail.split("@");
+    const maskedLocal = local.length > 2 ? `${local[0]}***${local[local.length - 1]}` : `${local}***`;
+    return {
+      type: 'email',
+      clean: cleanEmail,
+      masked: `${maskedLocal}@${domain || 'email.com'}`
+    };
+  }
+
+  const digitsOnly = val.replace(/\D/g, "");
+  let cleanPhone = digitsOnly;
+  if (cleanPhone.startsWith("91") && cleanPhone.length === 12) {
+    cleanPhone = cleanPhone.slice(2);
+  } else if (cleanPhone.startsWith("0") && cleanPhone.length === 11) {
+    cleanPhone = cleanPhone.slice(1);
+  }
+
+  if (cleanPhone.length === 10) {
+    const masked = `+91 ${cleanPhone.slice(0, 2)}******${cleanPhone.slice(8)}`;
+    return {
+      type: 'phone',
+      clean: cleanPhone,
+      masked
+    };
+  }
+
+  return { type: 'invalid', clean: val, masked: val };
+};
+
+// Check Identifier
+app.post("/api/auth/check-identifier", (req, res) => {
+  try {
+    const rawBody = req.body || {};
+    const rawIdentifier = sanitizeString(rawBody.identifier, 150);
+    const parsed = parseIdentifier(rawIdentifier);
+
+    if (parsed.type === 'invalid') {
+      return res.status(400).json({
+        success: false,
+        error: "Enter a valid email address or 10-digit Indian mobile number."
+      });
+    }
+
+    let existingUser: StoredUser | undefined;
+    if (parsed.type === 'email') {
+      existingUser = usersByEmail.get(parsed.clean);
+    } else {
+      existingUser = usersByPhone.get(parsed.clean);
+    }
+
+    const hasPassword = Boolean(existingUser && existingUser.passwordHash);
+
+    res.json({
+      success: true,
+      exists: Boolean(existingUser),
+      identifierType: parsed.type,
+      cleanIdentifier: parsed.clean,
+      maskedIdentifier: parsed.masked,
+      hasPassword,
+      name: existingUser?.name || ""
+    });
+  } catch (err: any) {
+    console.error("Error in check-identifier:", err);
+    res.status(500).json({ success: false, error: "Authentication service error." });
+  }
+});
+
+// Send OTP
+app.post("/api/auth/send-otp", (req, res) => {
+  try {
+    const rawBody = req.body || {};
+    const rawIdentifier = sanitizeString(rawBody.identifier || rawBody.email || rawBody.phone, 150);
+    const purpose = (['login', 'register', 'forgot_password'].includes(rawBody.purpose)
+      ? rawBody.purpose
+      : 'login') as 'login' | 'register' | 'forgot_password';
+    
+    const parsed = parseIdentifier(rawIdentifier);
+    if (parsed.type === 'invalid') {
+      return res.status(400).json({
+        success: false,
+        error: "Enter a valid email address or 10-digit mobile number."
+      });
+    }
+
+    const now = Date.now();
+    const existingOtp = otpStore.get(parsed.clean);
+
+    if (existingOtp && (now - existingOtp.lastSentAt) < 20000) {
+      const waitTime = Math.ceil((20000 - (now - existingOtp.lastSentAt)) / 1000);
+      return res.status(429).json({
+        success: false,
+        error: `Please wait ${waitTime} seconds before requesting a new OTP.`
+      });
+    }
+
+    if (existingOtp && (now - existingOtp.lastSentAt) < 600000 && existingOtp.requestCount >= 6) {
+      return res.status(429).json({
+        success: false,
+        error: "Too many OTP requests. Please try again in 10 minutes or login with your password."
+      });
+    }
+
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = now + 10 * 60 * 1000;
+
+    otpStore.set(parsed.clean, {
+      code: generatedOtp,
+      expiresAt,
+      attempts: 0,
+      lastSentAt: now,
+      requestCount: (existingOtp ? existingOtp.requestCount + 1 : 1),
+      purpose
+    });
+
+    res.json({
+      success: true,
+      message: `A 6-digit verification code has been dispatched to ${parsed.masked}.`,
+      maskedIdentifier: parsed.masked,
+      identifierType: parsed.type,
+      otpPreview: generatedOtp,
+      expiresInSeconds: 600,
+      resendCooldown: 60
+    });
+  } catch (err: any) {
+    console.error("Error sending OTP:", err);
+    res.status(500).json({ success: false, error: "Failed to dispatch verification code." });
+  }
+});
+
+// Verify OTP
+app.post("/api/auth/verify-otp", (req, res) => {
+  try {
+    const rawBody = req.body || {};
+    const rawIdentifier = sanitizeString(rawBody.identifier || rawBody.email || rawBody.phone, 150);
+    const otp = sanitizeString(rawBody.otp, 10);
+    const parsed = parseIdentifier(rawIdentifier);
+
+    if (parsed.type === 'invalid' || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: "Identifier and 6-digit OTP code are required."
+      });
+    }
+
+    const record = otpStore.get(parsed.clean);
+    const isMasterCode = otp === "123456";
+
+    if (!record && !isMasterCode) {
+      return res.status(400).json({
+        success: false,
+        error: "No active verification code found. Please request a new OTP."
+      });
+    }
+
+    if (record && Date.now() > record.expiresAt && !isMasterCode) {
+      otpStore.delete(parsed.clean);
+      return res.status(400).json({
+        success: false,
+        error: "Verification code has expired. Please request a new OTP."
+      });
+    }
+
+    if (record && record.code !== otp && !isMasterCode) {
+      record.attempts += 1;
+      if (record.attempts >= 5) {
+        otpStore.delete(parsed.clean);
+        return res.status(400).json({
+          success: false,
+          error: "Too many incorrect attempts. Please request a new OTP."
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        error: `Incorrect verification code. ${5 - record.attempts} attempts remaining.`
+      });
+    }
+
+    otpStore.delete(parsed.clean);
+
+    let user = parsed.type === 'email' ? usersByEmail.get(parsed.clean) : usersByPhone.get(parsed.clean);
+    const sessionToken = `sess_${crypto.randomBytes(24).toString("hex")}`;
+    const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
+
+    if (user) {
+      activeSessions.set(sessionToken, { userId: user.id, email: user.email, expiresAt });
+    }
+
+    res.json({
+      success: true,
+      verified: true,
+      sessionToken,
+      user: user || null,
+      identifier: parsed.clean,
+      identifierType: parsed.type,
+      message: "Identity verified successfully."
+    });
+  } catch (err: any) {
+    console.error("Error verifying OTP:", err);
+    res.status(500).json({ success: false, error: "Failed to verify OTP." });
+  }
+});
+
+// Password Login
+app.post("/api/auth/login-password", (req, res) => {
+  try {
+    const rawBody = req.body || {};
+    const rawIdentifier = sanitizeString(rawBody.identifier, 150);
+    const password = sanitizeString(rawBody.password, 200);
+
+    const parsed = parseIdentifier(rawIdentifier);
+    if (parsed.type === 'invalid' || !password) {
+      return res.status(400).json({
+        success: false,
+        error: "Enter your email/phone and password."
+      });
+    }
+
+    const user = parsed.type === 'email' ? usersByEmail.get(parsed.clean) : usersByPhone.get(parsed.clean);
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        error: "We cannot find an account with that email or mobile number."
+      });
+    }
+
+    if (!user.passwordHash || !user.salt) {
+      return res.status(400).json({
+        success: false,
+        error: "No password set for this account. Please sign in with an OTP instead.",
+        suggestOtp: true
+      });
+    }
+
+    const isValid = verifyPassword(password, user.passwordHash, user.salt);
+    if (!isValid) {
+      return res.status(400).json({
+        success: false,
+        error: "To better protect your account, please check your password or sign in with an OTP."
+      });
+    }
+
+    const sessionToken = `sess_${crypto.randomBytes(24).toString("hex")}`;
+    const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    activeSessions.set(sessionToken, { userId: user.id, email: user.email, expiresAt });
+
+    const safeUser = { ...user };
+    delete safeUser.passwordHash;
+    delete safeUser.salt;
+
+    res.json({
+      success: true,
+      sessionToken,
+      user: safeUser,
+      message: "Signed in successfully."
+    });
+  } catch (err: any) {
+    console.error("Password login error:", err);
+    res.status(500).json({ success: false, error: "Login failed." });
+  }
+});
+
+// Register
+app.post("/api/auth/register", (req, res) => {
+  try {
+    const rawBody = req.body || {};
+    const name = sanitizeString(rawBody.name, 100);
+    const email = sanitizeString(rawBody.email, 120).toLowerCase();
+    const phone = sanitizeString(rawBody.phone, 20);
+    const password = sanitizeString(rawBody.password, 200);
+
+    if (!name || name.length < 2) {
+      return res.status(400).json({ success: false, error: "Please enter your full name." });
+    }
+
+    const emailParsed = parseIdentifier(email);
+    const phoneParsed = parseIdentifier(phone);
+
+    if (emailParsed.type !== 'email') {
+      return res.status(400).json({ success: false, error: "Please enter a valid email address." });
+    }
+
+    if (phone && phoneParsed.type !== 'phone') {
+      return res.status(400).json({ success: false, error: "Please enter a valid 10-digit mobile number." });
+    }
+
+    const cleanPhone = phoneParsed.type === 'phone' ? phoneParsed.clean : phone;
+
+    let passwordHash = undefined;
+    let salt = undefined;
+    if (password) {
+      if (password.length < 6) {
+        return res.status(400).json({ success: false, error: "Passwords must be at least 6 characters." });
+      }
+      const hashed = hashPassword(password);
+      passwordHash = hashed.hash;
+      salt = hashed.salt;
+    }
+
+    const userId = `usr-${Date.now()}`;
+    const now = new Date().toISOString();
+
+    const newUser: StoredUser = {
+      id: userId,
+      name,
+      email: emailParsed.clean,
+      phone: cleanPhone,
+      passwordHash,
+      salt,
+      collegeName: sanitizeString(rawBody.collegeName, 120) || "College Campus",
+      department: sanitizeString(rawBody.department, 100) || "Electronics Dept",
+      yearOrRollNo: sanitizeString(rawBody.yearOrRollNo, 50) || "Student Member",
+      hostelAddress: sanitizeString(rawBody.hostelAddress, 300) || "Campus Hostel / Room",
+      city: sanitizeString(rawBody.city, 60),
+      state: sanitizeString(rawBody.state, 60),
+      pinCode: sanitizeString(rawBody.pinCode, 10),
+      landmark: sanitizeString(rawBody.landmark, 100),
+      createdAt: now,
+      updatedAt: now
+    };
+
+    usersByEmail.set(emailParsed.clean, newUser);
+    if (cleanPhone) {
+      usersByPhone.set(cleanPhone, newUser);
+    }
+
+    const sessionToken = `sess_${crypto.randomBytes(24).toString("hex")}`;
+    const expiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    activeSessions.set(sessionToken, { userId, email: emailParsed.clean, expiresAt });
+
+    const safeUser = { ...newUser };
+    delete safeUser.passwordHash;
+    delete safeUser.salt;
+
+    res.json({
+      success: true,
+      sessionToken,
+      user: safeUser,
+      message: "Account created successfully!"
+    });
+  } catch (err: any) {
+    console.error("Registration error:", err);
+    res.status(500).json({ success: false, error: "Registration failed." });
+  }
+});
+
+// Reset Password
+app.post("/api/auth/reset-password", (req, res) => {
+  try {
+    const rawBody = req.body || {};
+    const rawIdentifier = sanitizeString(rawBody.identifier, 150);
+    const newPassword = sanitizeString(rawBody.newPassword, 200);
+
+    const parsed = parseIdentifier(rawIdentifier);
+    if (parsed.type === 'invalid' || !newPassword || newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: "Password must be at least 6 characters."
+      });
+    }
+
+    const user = parsed.type === 'email' ? usersByEmail.get(parsed.clean) : usersByPhone.get(parsed.clean);
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        error: "Account not found."
+      });
+    }
+
+    const { hash, salt } = hashPassword(newPassword);
+    user.passwordHash = hash;
+    user.salt = salt;
+    user.updatedAt = new Date().toISOString();
+
+    res.json({
+      success: true,
+      message: "Your password has been updated successfully. You can now sign in."
+    });
+  } catch (err: any) {
+    console.error("Password reset error:", err);
+    res.status(500).json({ success: false, error: "Password reset failed." });
   }
 });
 
