@@ -126,6 +126,21 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
 
   if (!isOpen) return null;
 
+  // Helper to append quick domain chip to email
+  const handleApplyDomainChip = (domain: string) => {
+    const clean = identifier.trim();
+    if (!clean) {
+      setIdentifier(domain);
+      return;
+    }
+    if (clean.includes('@')) {
+      const prefix = clean.split('@')[0];
+      setIdentifier(`${prefix}${domain}`);
+    } else {
+      setIdentifier(`${clean}${domain}`);
+    }
+  };
+
   // -------------------------------------------------------------
   // STEP 1: Check Identifier & Route to Password or Create Account
   // -------------------------------------------------------------
@@ -134,10 +149,16 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
     setErrorMsg('');
     setSuccessMsg('');
 
-    const cleanInput = identifier.trim();
+    let cleanInput = identifier.trim().toLowerCase();
     if (!cleanInput) {
-      setErrorMsg('Enter your email or mobile phone number');
+      setErrorMsg('Please enter your email address (e.g. name@gmail.com or student@college.edu)');
       return;
+    }
+
+    // Auto-fix if user typed without domain but clicked continue (e.g., student name)
+    if (!cleanInput.includes('@') && !/^\d{10}$/.test(cleanInput)) {
+      cleanInput = `${cleanInput}@gmail.com`;
+      setIdentifier(cleanInput);
     }
 
     setIsLoading(true);
@@ -173,21 +194,13 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
         setStep('PASSWORD_LOGIN');
       } else {
         // New user -> Create Account screen
-        if (result.identifierType === 'phone') {
-          setRegPhone(result.cleanIdentifier);
-        } else {
-          setRegEmail(result.cleanIdentifier);
-        }
+        setRegEmail(result.cleanIdentifier);
         setStep('CREATE_ACCOUNT');
       }
     } catch (err: any) {
       console.error('Identifier check error:', err);
       // Fallback
-      if (cleanInput.includes('@')) {
-        setRegEmail(cleanInput);
-      } else {
-        setRegPhone(cleanInput);
-      }
+      setRegEmail(cleanInput);
       setStep('CREATE_ACCOUNT');
     } finally {
       setIsLoading(false);
@@ -594,31 +607,49 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
           )}
 
           {/* ========================================================= */}
-          {/* STEP 1: IDENTIFIER (Amazon Universal Entry Screen)        */}
+          {/* STEP 1: IDENTIFIER (Email-First Entry Screen)              */}
           {/* ========================================================= */}
           {step === 'IDENTIFIER' && (
             <div className="space-y-4">
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Sign in</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Sign in with Email</h1>
                 <p className="text-xs text-slate-500 mt-1">
-                  Access your hardware cart, lab orders, and student discounts
+                  Enter your student or personal email to access orders, cart, and campus discounts
                 </p>
               </div>
 
               <form onSubmit={handleContinueIdentifier} className="space-y-3.5">
                 <div>
                   <label className="block text-xs font-bold text-slate-800 mb-1">
-                    Email or mobile phone number
+                    Email address
                   </label>
-                  <input
-                    type="text"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="e.g. rahul@iitb.ac.in or 9876543210"
-                    autoFocus
-                    required
-                    className="w-full px-3 py-2 text-sm bg-white border border-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all text-slate-900 shadow-inner"
-                  />
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder="e.g. rahul@gmail.com or student@iitb.ac.in"
+                      autoFocus
+                      required
+                      className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all text-slate-900 shadow-inner"
+                    />
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
+
+                  {/* Quick Domain Completion Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                    <span className="text-[10px] font-semibold text-slate-500">Quick add:</span>
+                    {['@gmail.com', '@iitb.ac.in', '@nit.ac.in', '@edu.in', '@outlook.com'].map((domain) => (
+                      <button
+                        key={domain}
+                        type="button"
+                        onClick={() => handleApplyDomainChip(domain)}
+                        className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 hover:bg-amber-100 hover:text-amber-900 border border-slate-300 transition-all cursor-pointer text-slate-700"
+                      >
+                        {domain}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <button
@@ -629,7 +660,7 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
                   {isLoading ? (
                     <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
                   ) : (
-                    <span>Continue</span>
+                    <span>Continue with Email</span>
                   )}
                 </button>
               </form>
@@ -669,7 +700,7 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
                         onClick={() => handleRequestOtpLogin()}
                         className="hover:underline hover:text-amber-800"
                       >
-                        Sign in with OTP directly
+                        Sign in with 6-digit Email OTP directly
                       </button>
                     </div>
                   </div>
@@ -686,14 +717,12 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
                   onClick={() => {
                     if (identifier.includes('@')) {
                       setRegEmail(identifier);
-                    } else if (identifier) {
-                      setRegPhone(identifier);
                     }
                     setStep('CREATE_ACCOUNT');
                   }}
                   className="w-full py-2 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-300 text-slate-800 font-bold text-xs rounded-lg shadow-xs transition-all"
                 >
-                  Create your Inception account
+                  Create your Inception account with Email
                 </button>
               </div>
             </div>
@@ -776,37 +805,37 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
                 </div>
               </form>
 
-              {/* Flipkart / Amazon Signature Dual Auth: "Get an OTP on your phone" */}
+              {/* Amazon Signature Dual Auth: "Get an OTP on your email" */}
               <div className="pt-3 border-t border-slate-200 space-y-2 text-center">
                 <span className="text-xs text-slate-500 block">or sign in without password</span>
                 <button
                   type="button"
                   onClick={handleRequestOtpLogin}
                   disabled={isLoading}
-                  className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-900 font-bold text-xs rounded-lg shadow-xs transition-all flex items-center justify-center space-x-2"
+                  className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-900 font-bold text-xs rounded-lg shadow-xs transition-all flex items-center justify-center space-x-2 cursor-pointer"
                 >
                   <KeyRound className="w-4 h-4 text-amber-600" />
-                  <span>Get an OTP on your phone / email</span>
+                  <span>Get a 6-digit OTP on your email</span>
                 </button>
               </div>
             </div>
           )}
 
           {/* ========================================================= */}
-          {/* STEP 3: CREATE ACCOUNT (Amazon / Flipkart Registration)   */}
+          {/* STEP 3: CREATE ACCOUNT (Email-First Registration)          */}
           {/* ========================================================= */}
           {step === 'CREATE_ACCOUNT' && (
             <div className="space-y-4">
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Create Account</h1>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Sign up for fast checkout and delivery to campus
+                  Sign up with email for campus hardware delivery and order tracking
                 </p>
               </div>
 
               <form onSubmit={handleCreateAccountSubmit} className="space-y-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1">Your name *</label>
+                  <label className="block text-xs font-bold text-slate-800 mb-1">Your full name *</label>
                   <input
                     type="text"
                     value={fullName}
@@ -819,36 +848,22 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1">Mobile number *</label>
-                  <div className="flex">
-                    <span className="inline-flex items-center px-3 text-xs font-bold bg-slate-100 border border-r-0 border-slate-400 rounded-l-md text-slate-700">
-                      🇮🇳 +91
-                    </span>
+                  <label className="block text-xs font-bold text-slate-800 mb-1">Email address *</label>
+                  <div className="relative">
                     <input
-                      type="tel"
-                      value={regPhone}
-                      onChange={(e) => setRegPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                      placeholder="10-digit mobile number"
+                      type="email"
+                      value={regEmail}
+                      onChange={(e) => setRegEmail(e.target.value)}
+                      placeholder="e.g. rahul@gmail.com or student@iitb.ac.in"
                       required
-                      className="w-full px-3 py-2 text-sm bg-white border border-slate-400 rounded-r-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-slate-900 shadow-inner"
+                      className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-slate-900 shadow-inner"
                     />
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1">Email (for e-invoices) *</label>
-                  <input
-                    type="email"
-                    value={regEmail}
-                    onChange={(e) => setRegEmail(e.target.value)}
-                    placeholder="e.g. rahul@iitb.ac.in"
-                    required
-                    className="w-full px-3 py-2 text-sm bg-white border border-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-slate-900 shadow-inner"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1">Password</label>
+                  <label className="block text-xs font-bold text-slate-800 mb-1">Password *</label>
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
@@ -872,8 +887,24 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
                   </span>
                 </div>
 
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 mb-1">Mobile number (Optional, for delivery notifications)</label>
+                  <div className="flex">
+                    <span className="inline-flex items-center px-3 text-xs font-bold bg-slate-100 border border-r-0 border-slate-400 rounded-l-md text-slate-700">
+                      🇮🇳 +91
+                    </span>
+                    <input
+                      type="tel"
+                      value={regPhone}
+                      onChange={(e) => setRegPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      placeholder="10-digit mobile number"
+                      className="w-full px-3 py-2 text-sm bg-white border border-slate-400 rounded-r-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-slate-900 shadow-inner"
+                    />
+                  </div>
+                </div>
+
                 <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-[11px]">
-                  We will send you a text / email with an OTP to verify your account.
+                  We will send a 6-digit verification code to your email to verify your account.
                 </div>
 
                 <button
@@ -884,7 +915,7 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
                   {isLoading ? (
                     <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
                   ) : (
-                    <span>Verify mobile number / email</span>
+                    <span>Verify Email with OTP</span>
                   )}
                 </button>
               </form>
@@ -912,8 +943,8 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
                   Two-Step Verification
                 </h1>
                 <p className="text-xs text-slate-600 mt-1">
-                  For your security, we've sent the One Time Password (OTP) to:{' '}
-                  <span className="font-bold text-slate-900">{regPhone || regEmail || identifier}</span>{' '}
+                  For your security, we've sent the One Time Password (OTP) to your email:{' '}
+                  <span className="font-bold text-slate-900">{regEmail || identifier || regPhone}</span>{' '}
                   <button
                     type="button"
                     onClick={() => setStep('IDENTIFIER')}
@@ -1176,24 +1207,27 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
                   Password assistance
                 </h1>
                 <p className="text-xs text-slate-600 mt-1">
-                  Enter the email address or mobile phone number associated with your Inception account.
+                  Enter your registered email address to receive a secure password reset code.
                 </p>
               </div>
 
               <form onSubmit={handleForgotPasswordSubmit} className="space-y-3.5">
                 <div>
                   <label className="block text-xs font-bold text-slate-800 mb-1">
-                    Email or mobile phone number
+                    Email address
                   </label>
-                  <input
-                    type="text"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="e.g. rahul@iitb.ac.in or 9876543210"
-                    autoFocus
-                    required
-                    className="w-full px-3 py-2 text-sm bg-white border border-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900"
-                  />
+                  <div className="relative">
+                    <input
+                      type="email"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder="e.g. rahul@gmail.com or student@iitb.ac.in"
+                      autoFocus
+                      required
+                      className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 shadow-inner"
+                    />
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
                 </div>
 
                 <button
@@ -1204,19 +1238,18 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
                   {isLoading ? (
                     <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
                   ) : (
-                    <span>Continue</span>
+                    <span>Send Password Reset Code</span>
                   )}
                 </button>
               </form>
 
-              <div className="pt-3 border-t border-slate-200 text-xs text-slate-600">
-                Remember your password?{' '}
+              <div className="pt-2 text-center text-xs">
                 <button
                   type="button"
                   onClick={() => setStep('IDENTIFIER')}
                   className="text-blue-700 hover:underline font-bold"
                 >
-                  Sign in
+                  Back to Sign in
                 </button>
               </div>
             </div>

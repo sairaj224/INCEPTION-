@@ -313,13 +313,19 @@ const verifyPassword = (password: string, hash: string, salt: string) => {
   return computed === hash;
 };
 
-// Normalize identifier (Phone or Email)
+// Normalize identifier (Email-first with robust fallback)
 const parseIdentifier = (raw: string): { type: 'email' | 'phone' | 'invalid'; clean: string; masked: string } => {
   const val = (raw || "").trim();
   if (!val) return { type: 'invalid', clean: '', masked: '' };
 
+  // Email format parsing (Primary Auth Method)
   if (val.includes("@")) {
     const cleanEmail = val.toLowerCase();
+    // Validate basic email format pattern
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      return { type: 'invalid', clean: cleanEmail, masked: cleanEmail };
+    }
     const [local, domain] = cleanEmail.split("@");
     const maskedLocal = local.length > 2 ? `${local[0]}***${local[local.length - 1]}` : `${local}***`;
     return {
@@ -329,7 +335,7 @@ const parseIdentifier = (raw: string): { type: 'email' | 'phone' | 'invalid'; cl
     };
   }
 
-  // Check phone number format (Indian 10-digit mobile)
+  // Check phone number format (Indian 10-digit mobile) fallback
   const digitsOnly = val.replace(/\D/g, "");
   let cleanPhone = digitsOnly;
   if (cleanPhone.startsWith("91") && cleanPhone.length === 12) {
@@ -350,7 +356,7 @@ const parseIdentifier = (raw: string): { type: 'email' | 'phone' | 'invalid'; cl
   return { type: 'invalid', clean: val, masked: val };
 };
 
-// 1. Amazon / Flipkart Step 1: Check Identifier & Lookup Account
+// 1. Email-First Step 1: Check Identifier & Lookup Account
 app.post("/api/auth/check-identifier", (req, res) => {
   try {
     const rawBody = req.body || {};
@@ -360,7 +366,7 @@ app.post("/api/auth/check-identifier", (req, res) => {
     if (parsed.type === 'invalid') {
       return res.status(400).json({
         success: false,
-        error: "Enter a valid email address or 10-digit Indian mobile number."
+        error: "Please enter a valid email address (e.g. name@gmail.com or student@college.edu)."
       });
     }
 
@@ -388,7 +394,7 @@ app.post("/api/auth/check-identifier", (req, res) => {
   }
 });
 
-// 2. Amazon / Flipkart Step 2: Send OTP (with Rate Limiting & Countdown)
+// 2. Email-First Step 2: Send OTP (with Rate Limiting & Countdown)
 app.post("/api/auth/send-otp", (req, res) => {
   try {
     const rawBody = req.body || {};
@@ -401,7 +407,7 @@ app.post("/api/auth/send-otp", (req, res) => {
     if (parsed.type === 'invalid') {
       return res.status(400).json({
         success: false,
-        error: "Enter a valid email address or 10-digit mobile number."
+        error: "Please enter a valid email address."
       });
     }
 
@@ -413,7 +419,7 @@ app.post("/api/auth/send-otp", (req, res) => {
       const waitTime = Math.ceil((20000 - (now - existingOtp.lastSentAt)) / 1000);
       return res.status(429).json({
         success: false,
-        error: `Please wait ${waitTime} seconds before requesting a new OTP.`
+        error: `Please wait ${waitTime} seconds before requesting a new verification code.`
       });
     }
 
@@ -421,7 +427,7 @@ app.post("/api/auth/send-otp", (req, res) => {
     if (existingOtp && (now - existingOtp.lastSentAt) < 600000 && existingOtp.requestCount >= 6) {
       return res.status(429).json({
         success: false,
-        error: "Too many OTP requests. Please try again in 10 minutes or login with your password."
+        error: "Too many verification requests. Please try again in 10 minutes or login with your password."
       });
     }
 
@@ -442,7 +448,7 @@ app.post("/api/auth/send-otp", (req, res) => {
 
     res.json({
       success: true,
-      message: `A 6-digit verification code has been dispatched to ${parsed.masked}.`,
+      message: `A 6-digit verification code has been dispatched to your email: ${parsed.masked}.`,
       maskedIdentifier: parsed.masked,
       identifierType: parsed.type,
       otpPreview: generatedOtp, // Transparently available for testing

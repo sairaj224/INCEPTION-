@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CartItem, UserProfile, PlacedOrder } from '../types';
 import { X, Trash2, CheckCircle2, ArrowRight, Sparkles, Loader2, CreditCard, User, Phone, MapPin, Building, GraduationCap, Banknote, ShieldCheck, Plus, Minus, Tag, HelpCircle, Ban, Mail } from 'lucide-react';
+import { saveOrderToFirestore, saveUserToFirestore } from '../lib/firebase';
 
 interface CartCheckoutModalProps {
   isOpen: boolean;
@@ -152,7 +153,6 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
 
     setTimeout(async () => {
       try {
-        const { saveOrderToFirestore, saveUserToFirestore } = await import('../lib/firebase');
         await saveOrderToFirestore(newOrder);
         
         if (userProfile?.isLoggedIn) {
