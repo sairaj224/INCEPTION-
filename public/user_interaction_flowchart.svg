@@ -1,0 +1,379 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080" style="background:#090d16; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <!-- Background Grid -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.75" opacity="0.6"/>
+      <circle cx="40" cy="40" r="1" fill="#334155" opacity="0.5"/>
+    </pattern>
+
+    <!-- Gradients -->
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+
+    <linearGradient id="blueCard" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+
+    <linearGradient id="aiCard" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+
+    <linearGradient id="shopCard" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+
+    <linearGradient id="debugCard" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4c1d95"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+
+    <linearGradient id="learnCard" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+
+    <linearGradient id="accentCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+
+    <!-- Filters for Glow -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+
+    <!-- Markers for arrows -->
+    <marker id="arrowCyan" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="arrowEmerald" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#34d399"/>
+    </marker>
+    <marker id="arrowPurple" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#a855f7"/>
+    </marker>
+    <marker id="arrowAmber" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#fbbf24"/>
+    </marker>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1920" height="1080" fill="#070b14"/>
+  <rect width="1920" height="1080" fill="url(#grid)"/>
+
+  <!-- Top Ambient Glows -->
+  <circle cx="200" cy="100" r="300" fill="#3b82f6" opacity="0.1" filter="url(#glow)"/>
+  <circle cx="960" cy="150" r="400" fill="#8b5cf6" opacity="0.08" filter="url(#glow)"/>
+  <circle cx="1700" cy="200" r="300" fill="#06b6d4" opacity="0.1" filter="url(#glow)"/>
+
+  <!-- ==================== HEADER SECTION ==================== -->
+  <g transform="translate(80, 50)">
+    <!-- Brand Tag -->
+    <rect x="0" y="0" width="160" height="30" rx="15" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+    <circle cx="18" cy="15" r="5" fill="#38bdf8"/>
+    <text x="32" y="20" fill="#38bdf8" font-size="12" font-weight="700" letter-spacing="1">USER JOURNEY</text>
+
+    <!-- Main Title -->
+    <text x="0" y="70" fill="#ffffff" font-size="34" font-weight="800" letter-spacing="-0.5">
+      Inception AI • Complete User Interaction Flowchart
+    </text>
+    <text x="0" y="98" fill="#94a3b8" font-size="15" font-weight="400">
+      How engineering students, makers, and university clubs interact with AI discovery, hardware procurement, and circuit debugging.
+    </text>
+
+    <!-- Legend Pills (Right side of header) -->
+    <g transform="translate(1150, 20)">
+      <rect x="0" y="0" width="610" height="60" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+      
+      <circle cx="25" cy="30" r="6" fill="#38bdf8"/>
+      <text x="38" y="34" fill="#cbd5e1" font-size="12" font-weight="600">AI Project Discovery</text>
+
+      <circle cx="175" cy="30" r="6" fill="#34d399"/>
+      <text x="188" y="34" fill="#cbd5e1" font-size="12" font-weight="600">Hardware Store</text>
+
+      <circle cx="305" cy="30" r="6" fill="#c084fc"/>
+      <text x="318" y="34" fill="#cbd5e1" font-size="12" font-weight="600">AI Troubleshooter</text>
+
+      <circle cx="445" cy="30" r="6" fill="#fbbf24"/>
+      <text x="458" y="34" fill="#cbd5e1" font-size="12" font-weight="600">Campus Fulfillment</text>
+    </g>
+  </g>
+
+  <!-- ==================== PHASE COLUMNS BACKGROUND TRACKS ==================== -->
+  <!-- Col 1: Arrival & Profile (x: 80, w: 260) -->
+  <!-- Col 2: Action Pathways (x: 400, w: 450) -->
+  <!-- Col 3: Optimization & Checkout (x: 930, w: 450) -->
+  <!-- Col 4: Dispatch & Post-Build (x: 1450, w: 390) -->
+
+  <!-- Phase 1 Header -->
+  <g transform="translate(80, 180)">
+    <rect x="0" y="0" width="280" height="34" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <text x="140" y="22" fill="#94a3b8" font-size="12" font-weight="700" text-anchor="middle" letter-spacing="1">STEP 1 • ONBOARDING</text>
+  </g>
+
+  <!-- Phase 2 Header -->
+  <g transform="translate(420, 180)">
+    <rect x="0" y="0" width="460" height="34" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <text x="230" y="22" fill="#94a3b8" font-size="12" font-weight="700" text-anchor="middle" letter-spacing="1">STEP 2 • INTERACTIVE PATHWAYS (USER INTENT)</text>
+  </g>
+
+  <!-- Phase 3 Header -->
+  <g transform="translate(940, 180)">
+    <rect x="0" y="0" width="460" height="34" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <text x="230" y="22" fill="#94a3b8" font-size="12" font-weight="700" text-anchor="middle" letter-spacing="1">STEP 3 • PROCUREMENT &amp; SMART BOM</text>
+  </g>
+
+  <!-- Phase 4 Header -->
+  <g transform="translate(1460, 180)">
+    <rect x="0" y="0" width="380" height="34" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1"/>
+    <text x="190" y="22" fill="#94a3b8" font-size="12" font-weight="700" text-anchor="middle" letter-spacing="1">STEP 4 • CAMPUS DISPATCH &amp; LEARNING</text>
+  </g>
+
+
+  <!-- ==================== COLUMN 1: ARRIVAL & AUTH ==================== -->
+
+  <!-- Node 1.1: User Visits App -->
+  <g transform="translate(80, 240)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="280" height="150" rx="16" fill="url(#blueCard)" stroke="#3b82f6" stroke-width="2"/>
+    <circle cx="36" cy="36" r="18" fill="#1e3a8a"/>
+    <!-- Globe/Device Icon -->
+    <path d="M28 36 A8 8 0 0 1 44 36 A8 8 0 0 1 28 36 Z M36 28 L36 44" stroke="#60a5fa" stroke-width="2" fill="none"/>
+    <text x="68" y="34" fill="#ffffff" font-size="15" font-weight="700">Student Enters App</text>
+    <text x="68" y="52" fill="#38bdf8" font-size="11" font-weight="600">Web SPA / Mobile PWA</text>
+    
+    <line x1="20" y1="72" x2="260" y2="72" stroke="#334155" stroke-width="1"/>
+    <text x="20" y="94" fill="#94a3b8" font-size="12">• Opens Inception AI Platform</text>
+    <text x="20" y="114" fill="#94a3b8" font-size="12">• Instant preview of projects &amp; catalog</text>
+    <text x="20" y="134" fill="#94a3b8" font-size="12">• No barrier to explore</text>
+  </g>
+
+  <!-- Flow Connector 1.1 -> 1.2 -->
+  <path d="M 220 390 L 220 440" stroke="#38bdf8" stroke-width="2.5" stroke-dasharray="4 4" marker-end="url(#arrowCyan)"/>
+
+  <!-- Node 1.2: Student Identity & .EDU Verification -->
+  <g transform="translate(80, 450)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="280" height="210" rx="16" fill="url(#blueCard)" stroke="#475569" stroke-width="1.5"/>
+    <circle cx="36" cy="36" r="18" fill="#14532d"/>
+    <!-- Student Cap Icon -->
+    <path d="M26 34 L36 29 L46 34 L36 39 Z M43 36 L43 43" stroke="#4ade80" stroke-width="2" fill="none"/>
+    <text x="68" y="34" fill="#ffffff" font-size="15" font-weight="700">Campus Identity</text>
+    <text x="68" y="52" fill="#4ade80" font-size="11" font-weight="600">Email OTP &amp; .EDU Perks</text>
+
+    <line x1="20" y1="72" x2="260" y2="72" stroke="#334155" stroke-width="1"/>
+    <text x="20" y="96" fill="#cbd5e1" font-size="12" font-weight="600">Dual Authentication:</text>
+    <text x="20" y="116" fill="#94a3b8" font-size="12">• 1-Tap Email OTP or Password</text>
+    <text x="20" y="136" fill="#94a3b8" font-size="12">• College Domain Auto-Detect</text>
+    
+    <!-- Discount Badge inside Card -->
+    <rect x="20" y="152" width="240" height="40" rx="8" fill="#064e3b" stroke="#10b981" stroke-width="1"/>
+    <text x="140" y="176" fill="#34d399" font-size="12" font-weight="700" text-anchor="middle">🎉 15% Campus Discount Activated</text>
+  </g>
+
+  <!-- Connector Node 1.2 branching out to Phase 2 Paths -->
+  <path d="M 360 555 C 390 555, 390 315, 420 315" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#arrowCyan)"/>
+  <path d="M 360 555 C 390 555, 390 515, 420 515" stroke="#34d399" stroke-width="2.5" fill="none" marker-end="url(#arrowEmerald)"/>
+  <path d="M 360 555 C 390 555, 390 715, 420 715" stroke="#c084fc" stroke-width="2.5" fill="none" marker-end="url(#arrowPurple)"/>
+  <path d="M 360 555 C 390 555, 390 895, 420 895" stroke="#fbbf24" stroke-width="2.5" fill="none" marker-end="url(#arrowAmber)"/>
+
+
+  <!-- ==================== COLUMN 2: THE 4 USER INTERACTION PATHWAYS ==================== -->
+
+  <!-- PATH A: AI Project Recommendation -->
+  <g transform="translate(420, 240)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="460" height="160" rx="16" fill="url(#aiCard)" stroke="#6366f1" stroke-width="2"/>
+    <circle cx="36" cy="36" r="18" fill="#312e81"/>
+    <!-- Sparkle / Brain Icon -->
+    <path d="M36 26 L38 33 L45 36 L38 39 L36 46 L34 39 L27 36 L34 33 Z" fill="#818cf8"/>
+    <text x="68" y="34" fill="#ffffff" font-size="16" font-weight="700">Path A: AI Project Discovery &amp; Matching</text>
+    <text x="68" y="52" fill="#a5b4fc" font-size="11" font-weight="600">Powered by Google Gemini 3.6 Flash</text>
+
+    <line x1="20" y1="70" x2="440" y2="70" stroke="#334155" stroke-width="1"/>
+    <text x="20" y="94" fill="#cbd5e1" font-size="12">1. Student inputs: <tspan fill="#38bdf8" font-weight="700">Target Budget (₹ INR)</tspan> + <tspan fill="#818cf8" font-weight="700">Domain</tspan> (IoT, Robotics, AIoT)</text>
+    <text x="20" y="116" fill="#cbd5e1" font-size="12">2. Model generates 3 feasible hardware projects tailored to skill level</text>
+    <text x="20" y="138" fill="#cbd5e1" font-size="12">3. Outputs: Estimated build time, full BOM, and learning milestones</text>
+  </g>
+
+  <!-- PATH B: Hardware Marketplace -->
+  <g transform="translate(420, 430)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="460" height="160" rx="16" fill="url(#shopCard)" stroke="#10b981" stroke-width="2"/>
+    <circle cx="36" cy="36" r="18" fill="#064e3b"/>
+    <!-- Shopping Bag Icon -->
+    <path d="M28 32 L44 32 L41 44 L31 44 Z M32 32 A4 4 0 0 1 40 32" stroke="#34d399" stroke-width="2" fill="none"/>
+    <text x="68" y="34" fill="#ffffff" font-size="16" font-weight="700">Path B: Hardware Marketplace &amp; Bundles</text>
+    <text x="68" y="52" fill="#6ee7b7" font-size="11" font-weight="600">Individual ICs, Sensors &amp; Verified Kits</text>
+
+    <line x1="20" y1="70" x2="440" y2="70" stroke="#334155" stroke-width="1"/>
+    <text x="20" y="94" fill="#cbd5e1" font-size="12">1. Browse by microcontrollers: ESP32, Arduino Uno, RP2040, STM32</text>
+    <text x="20" y="116" fill="#cbd5e1" font-size="12">2. Single-part purchase or 1-Click complete project kits</text>
+    <text x="20" y="138" fill="#cbd5e1" font-size="12">3. Real-time stock status, college pricing &amp; pin-compatibility badges</text>
+  </g>
+
+  <!-- PATH C: AI Circuit Troubleshooter -->
+  <g transform="translate(420, 625)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="460" height="175" rx="16" fill="url(#debugCard)" stroke="#8b5cf6" stroke-width="2"/>
+    <circle cx="36" cy="36" r="18" fill="#4c1d95"/>
+    <!-- Wrench/Bug Icon -->
+    <path d="M29 32 L34 37 M43 28 L37 34 L39 42 L33 40 L30 43" stroke="#c084fc" stroke-width="2" fill="none"/>
+    <text x="68" y="34" fill="#ffffff" font-size="16" font-weight="700">Path C: AI Hardware &amp; Firmware Troubleshooter</text>
+    <text x="68" y="52" fill="#d8b4fe" font-size="11" font-weight="600">Interactive Circuit Doctor &amp; Code Fixer</text>
+
+    <line x1="20" y1="70" x2="440" y2="70" stroke="#334155" stroke-width="1"/>
+    <text x="20" y="94" fill="#cbd5e1" font-size="12">1. Student describes symptom: <tspan fill="#f43f5e">"ESP32 brownout reboot"</tspan> or <tspan fill="#f59e0b">"I2C 0x3C not found"</tspan></text>
+    <text x="20" y="116" fill="#cbd5e1" font-size="12">2. AI performs root-cause fault diagnosis (pull-ups, power surge, pinout clash)</text>
+    <text x="20" y="138" fill="#cbd5e1" font-size="12">3. Returns: <tspan fill="#a855f7" font-weight="700">4 Physical Wiring Checks</tspan> + <tspan fill="#38bdf8" font-weight="700">Ready-to-flash C++ Code Fix</tspan></text>
+  </g>
+
+  <!-- PATH D: Learning Lab & Guides -->
+  <g transform="translate(420, 825)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="460" height="140" rx="16" fill="url(#learnCard)" stroke="#3b82f6" stroke-width="2"/>
+    <circle cx="36" cy="36" r="18" fill="#1e3a8a"/>
+    <!-- Graduation Cap / Book Icon -->
+    <path d="M27 35 L36 30 L45 35 L36 40 Z M43 37 L43 43" stroke="#60a5fa" stroke-width="2" fill="none"/>
+    <text x="68" y="34" fill="#ffffff" font-size="16" font-weight="700">Path D: Interactive Learning Lab &amp; Tutorials</text>
+    <text x="68" y="52" fill="#93c5fd" font-size="11" font-weight="600">High-Res Schematics, Code Sketches &amp; Pinouts</text>
+
+    <line x1="20" y1="70" x2="440" y2="70" stroke="#334155" stroke-width="1"/>
+    <text x="20" y="94" fill="#cbd5e1" font-size="12">• Pinout tables (GPIO, ADC, PWM, I2C, SPI)</text>
+    <text x="20" y="116" fill="#cbd5e1" font-size="12">• Component Deep-Dives: "Why do I need an optocoupler?"</text>
+  </g>
+
+
+  <!-- ==================== COLUMN 3: PROCUREMENT & CHECKOUT ==================== -->
+
+  <!-- Connectors from Path A & B into Step 3 -->
+  <path d="M 880 320 C 910 320, 910 330, 940 330" stroke="#38bdf8" stroke-width="2.5" fill="none" marker-end="url(#arrowCyan)"/>
+  <path d="M 880 510 C 910 510, 910 360, 940 360" stroke="#34d399" stroke-width="2.5" fill="none" marker-end="url(#arrowEmerald)"/>
+
+  <!-- Node 3.1: Interactive BOM Checklist & Optimization -->
+  <g transform="translate(940, 240)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="460" height="210" rx="16" fill="url(#blueCard)" stroke="#38bdf8" stroke-width="2"/>
+    <circle cx="36" cy="36" r="18" fill="#0c4a6e"/>
+    <!-- Checklist Icon -->
+    <path d="M28 36 L33 41 L43 31" stroke="#38bdf8" stroke-width="2" fill="none"/>
+    <text x="68" y="34" fill="#ffffff" font-size="16" font-weight="700">Dynamic BOM Optimization</text>
+    <text x="68" y="52" fill="#38bdf8" font-size="11" font-weight="600">Save Money: "Only Buy What You Need"</text>
+
+    <line x1="20" y1="70" x2="440" y2="70" stroke="#334155" stroke-width="1"/>
+    <text x="20" y="94" fill="#cbd5e1" font-size="12">• Student unchecks components they already possess in their lab</text>
+    <text x="20" y="116" fill="#cbd5e1" font-size="12">• Cart recalculates instantly in ₹ INR with bulk student discount</text>
+    <text x="20" y="138" fill="#cbd5e1" font-size="12">• Pre-flashed microcontroller option (firmware pre-loaded)</text>
+
+    <!-- Mini BOM preview badge -->
+    <rect x="20" y="154" width="420" height="42" rx="8" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="35" y="180" fill="#94a3b8" font-size="12">✓ ESP32 (₹420)  |  ✓ OLED (₹190)  |  <tspan fill="#64748b" text-decoration="line-through">✗ Jumper Wires (Saved)</tspan></text>
+  </g>
+
+  <!-- Flow Connector 3.1 -> 3.2 -->
+  <path d="M 1170 450 L 1170 510" stroke="#34d399" stroke-width="2.5" marker-end="url(#arrowEmerald)"/>
+
+  <!-- Node 3.2: Campus Hostel Checkout -->
+  <g transform="translate(940, 520)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="460" height="230" rx="16" fill="url(#blueCard)" stroke="#10b981" stroke-width="2"/>
+    <circle cx="36" cy="36" r="18" fill="#064e3b"/>
+    <!-- Building/Location Pin Icon -->
+    <path d="M36 26 A6 6 0 0 1 42 32 C42 38 36 45 36 45 C36 45 30 38 30 32 A6 6 0 0 1 36 26 Z" stroke="#34d399" stroke-width="2" fill="none"/>
+    <text x="68" y="34" fill="#ffffff" font-size="16" font-weight="700">Campus Hostel Delivery Checkout</text>
+    <text x="68" y="52" fill="#6ee7b7" font-size="11" font-weight="600">Tailored to University Life</text>
+
+    <line x1="20" y1="70" x2="440" y2="70" stroke="#334155" stroke-width="1"/>
+    <text x="20" y="94" fill="#cbd5e1" font-size="12" font-weight="600">Campus Delivery Coordinates:</text>
+    <text x="20" y="116" fill="#94a3b8" font-size="12">• University Name (e.g., IIT Bombay, NIT Trichy, VIT)</text>
+    <text x="20" y="136" fill="#94a3b8" font-size="12">• Hostel Block &amp; Room Number (e.g. Block C, Room 304)</text>
+    
+    <text x="20" y="162" fill="#cbd5e1" font-size="12" font-weight="600">Flexible Payment Gateways:</text>
+    <text x="20" y="182" fill="#94a3b8" font-size="12">• UPI QR (GPay / PhonePe / Paytm)  • NetBanking  • Cash on Delivery (COD)</text>
+
+    <rect x="20" y="196" width="420" height="24" rx="4" fill="#14532d" opacity="0.6"/>
+    <text x="230" y="212" fill="#86efac" font-size="11" font-weight="700" text-anchor="middle">Instant E-Invoice + 7-Day Testing Warranty Issued</text>
+  </g>
+
+
+  <!-- ==================== COLUMN 4: HARDWARE QA, DELIVERY & SUCCESS ==================== -->
+
+  <!-- Connectors from Step 3 to Step 4 -->
+  <path d="M 1400 635 L 1460 635" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#arrowAmber)"/>
+
+  <!-- Node 4.1: Pre-Dispatch Hardware Testing -->
+  <g transform="translate(1460, 240)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="380" height="150" rx="16" fill="url(#blueCard)" stroke="#f59e0b" stroke-width="2"/>
+    <circle cx="36" cy="36" r="18" fill="#78350f"/>
+    <!-- Chip / Check Icon -->
+    <rect x="29" y="29" width="14" height="14" rx="2" stroke="#fcd34d" stroke-width="1.5" fill="none"/>
+    <path d="M33 36 L36 39 L42 33" stroke="#4ade80" stroke-width="2" fill="none"/>
+    <text x="68" y="34" fill="#ffffff" font-size="15" font-weight="700">Pre-Dispatch QA Testing</text>
+    <text x="68" y="52" fill="#fbbf24" font-size="11" font-weight="600">Zero Dead-On-Arrival ICs</text>
+
+    <line x1="20" y1="70" x2="360" y2="70" stroke="#334155" stroke-width="1"/>
+    <text x="20" y="94" fill="#94a3b8" font-size="12">• Multimeter continuity &amp; voltage tests</text>
+    <text x="20" y="114" fill="#94a3b8" font-size="12">• Sensor response &amp; I2C probe verification</text>
+    <text x="20" y="134" fill="#94a3b8" font-size="12">• Anti-static packaging &amp; test seal attached</text>
+  </g>
+
+  <!-- Flow Connector 4.1 -> 4.2 -->
+  <path d="M 1650 390 L 1650 440" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#arrowAmber)"/>
+
+  <!-- Node 4.2: Real-Time Order Tracking & Campus Arrival -->
+  <g transform="translate(1460, 440)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="380" height="170" rx="16" fill="url(#blueCard)" stroke="#38bdf8" stroke-width="2"/>
+    <circle cx="36" cy="36" r="18" fill="#0c4a6e"/>
+    <!-- Truck Icon -->
+    <path d="M26 38 L30 38 L30 32 L40 32 L44 36 L44 38 M28 42 A3 3 0 0 1 34 42 M38 42 A3 3 0 0 1 44 42" stroke="#38bdf8" stroke-width="2" fill="none"/>
+    <text x="68" y="34" fill="#ffffff" font-size="15" font-weight="700">Real-Time Order Tracking</text>
+    <text x="68" y="52" fill="#38bdf8" font-size="11" font-weight="600">Live Stage Updates</text>
+
+    <line x1="20" y1="70" x2="360" y2="70" stroke="#334155" stroke-width="1"/>
+    <text x="20" y="94" fill="#cbd5e1" font-size="12">1. <tspan fill="#34d399">Order Placed &amp; Components Reserved</tspan></text>
+    <text x="20" y="114" fill="#cbd5e1" font-size="12">2. <tspan fill="#fbbf24">Bench Tested &amp; Anti-Static Packed</tspan></text>
+    <text x="20" y="134" fill="#cbd5e1" font-size="12">3. <tspan fill="#60a5fa">Dispatched &amp; Delivered to Campus Hostel</tspan></text>
+    <text x="20" y="154" fill="#94a3b8" font-size="11">SMS &amp; Email updates at every checkpoint</text>
+  </g>
+
+  <!-- Flow Connector 4.2 -> 4.3 -->
+  <path d="M 1650 610 L 1650 660" stroke="#4ade80" stroke-width="2.5" marker-end="url(#arrowEmerald)"/>
+
+  <!-- Node 4.3: Build, Debug Loop & Community Showcase -->
+  <g transform="translate(1460, 660)" filter="url(#cardShadow)">
+    <rect x="0" y="0" width="380" height="210" rx="16" fill="url(#shopCard)" stroke="#4ade80" stroke-width="2"/>
+    <circle cx="36" cy="36" r="18" fill="#14532d"/>
+    <!-- Trophy / Star Icon -->
+    <path d="M30 30 L42 30 L40 38 A4 4 0 0 1 32 38 Z M36 38 L36 43 M32 43 L40 43" stroke="#4ade80" stroke-width="2" fill="none"/>
+    <text x="68" y="34" fill="#ffffff" font-size="15" font-weight="700">Project Assembly &amp; Success</text>
+    <text x="68" y="52" fill="#86efac" font-size="11" font-weight="600">Continuous AI Support Loop</text>
+
+    <line x1="20" y1="70" x2="360" y2="70" stroke="#334155" stroke-width="1"/>
+    <text x="20" y="94" fill="#cbd5e1" font-size="12">• Student unboxes hardware &amp; follows interactive guide</text>
+    <text x="20" y="114" fill="#cbd5e1" font-size="12">• Stumble upon wiring issue? <tspan fill="#c084fc" font-weight="700">1-Click AI Troubleshoot</tspan></text>
+    <text x="20" y="134" fill="#cbd5e1" font-size="12">• Working prototype achieved!</text>
+    <text x="20" y="154" fill="#cbd5e1" font-size="12">• Publishes build to <tspan fill="#38bdf8" font-weight="700">Maker Showcase</tspan> for peer feedback</text>
+
+    <!-- Feedback loop back to learning -->
+    <rect x="20" y="170" width="340" height="30" rx="6" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="190" y="190" fill="#a7f3d0" font-size="11" font-weight="700" text-anchor="middle">🎓 Practical Engineering Skills Mastered</text>
+  </g>
+
+  <!-- Feedback Loop Arrow back to Troubleshooter / Lab -->
+  <path d="M 1460 765 C 1200 765, 1000 870, 880 720" stroke="#c084fc" stroke-width="2" stroke-dasharray="6 4" fill="none" marker-end="url(#arrowPurple)"/>
+  <text x="1170" y="795" fill="#d8b4fe" font-size="11" font-weight="600" text-anchor="middle">Loop: Real-Time Debugging Support during Assembly</text>
+
+  <!-- Bottom Bar: Status / Footer -->
+  <g transform="translate(80, 1010)">
+    <rect x="0" y="0" width="1760" height="42" rx="10" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+    <text x="30" y="26" fill="#64748b" font-size="12" font-weight="500">
+      System: <tspan fill="#94a3b8">React 19 + Vite</tspan>  |  AI: <tspan fill="#38bdf8">Gemini 3.6 Flash</tspan>  |  Databases: <tspan fill="#34d399">Firebase Firestore &amp; Supabase</tspan>  |  Security: <tspan fill="#f59e0b">PBKDF2 SHA-512 + Firebase Auth</tspan>
+    </text>
+    <text x="1730" y="26" fill="#38bdf8" font-size="12" font-weight="700" text-anchor="end">
+      © Inception AI • Student Hardware &amp; Learning Platform
+    </text>
+  </g>
+</svg>

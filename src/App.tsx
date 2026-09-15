@@ -24,6 +24,7 @@ import { CacheSettingsModal } from './components/CacheSettingsModal';
 import { SitemapModal } from './components/SitemapModal';
 import { ErrorLogModal } from './components/ErrorLogModal';
 import { SupabaseModal } from './components/SupabaseModal';
+import { FlowchartModal } from './components/FlowchartModal';
 import { Footer } from './components/Footer';
 import { LearningHubMain } from './components/LearningHub/LearningHubMain';
 import { CookiePreferences } from './types';
@@ -188,6 +189,7 @@ export default function App() {
   const [isSitemapOpen, setIsSitemapOpen] = useState<boolean>(false);
   const [isErrorLogOpen, setIsErrorLogOpen] = useState<boolean>(false);
   const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState<boolean>(false);
+  const [isFlowchartOpen, setIsFlowchartOpen] = useState<boolean>(false);
 
   // Theme Preference State ('dark' | 'light')
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -798,6 +800,7 @@ export default function App() {
           onOpenSupport={() => handleOpenSupport()}
           watchlistCount={watchlistProjectIds.size + watchlistProductIds.size}
           onOpenWatchlist={() => setIsWatchlistOpen(true)}
+          onOpenFlowchart={() => setIsFlowchartOpen(true)}
           theme={theme}
           onToggleTheme={handleToggleTheme}
         />
@@ -1052,6 +1055,7 @@ export default function App() {
         onOpenAdminInventory={() => setIsAdminInventoryOpen(true)}
         isAdminAuthenticated={isAdminAuthenticated}
         onOpenSupabaseModal={() => setIsSupabaseModalOpen(true)}
+        onOpenFlowchart={() => setIsFlowchartOpen(true)}
       />
 
       {/* Cookie Consent Banner */}
@@ -1278,6 +1282,12 @@ export default function App() {
           setActiveTab(tab);
           setSelectedProject(null);
         }}
+      />
+
+      {/* User Interaction Flowchart Modal */}
+      <FlowchartModal
+        isOpen={isFlowchartOpen}
+        onClose={() => setIsFlowchartOpen(false)}
       />
 
       {/* Bottom Right Floating AI Finder Button & Speech Bubble */}

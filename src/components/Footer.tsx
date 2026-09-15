@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Cookie, Zap, FileText, Cpu, Heart, BarChart3, Globe, Bug } from 'lucide-react';
+import { Shield, Cookie, Zap, FileText, Cpu, Heart, BarChart3, Globe, Bug, GitBranch } from 'lucide-react';
 import { InceptionLogo } from './InceptionLogo';
 
 interface FooterProps {
@@ -12,6 +12,7 @@ interface FooterProps {
   onOpenAdminInventory?: () => void;
   isAdminAuthenticated?: boolean;
   onOpenSupabaseModal?: () => void;
+  onOpenFlowchart?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -24,6 +25,7 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenAdminInventory,
   isAdminAuthenticated,
   onOpenSupabaseModal,
+  onOpenFlowchart,
 }) => {
   return (
     <footer className="mt-16 bg-slate-900 border-t border-slate-800 text-slate-400 text-xs py-8 px-4 sm:px-6">
@@ -89,6 +91,17 @@ export const Footer: React.FC<FooterProps> = ({
                   >
                     <Globe className="w-3 h-3 text-slate-500" />
                     <span>Store Sitemap & SEO Index</span>
+                  </button>
+                </li>
+              )}
+              {onOpenFlowchart && (
+                <li>
+                  <button
+                    onClick={onOpenFlowchart}
+                    className="hover:text-blue-400 text-blue-300 font-semibold transition-colors flex items-center space-x-1"
+                  >
+                    <GitBranch className="w-3 h-3 text-blue-400" />
+                    <span>User Interaction Flowchart</span>
                   </button>
                 </li>
               )}
