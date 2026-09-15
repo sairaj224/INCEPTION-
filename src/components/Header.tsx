@@ -38,7 +38,7 @@ const UserPinAvatar: React.FC<UserPinAvatarProps> = ({ userProfile, size = 'md',
             </svg>
           </div>
           <span className="relative z-10 text-[10px] font-black text-white drop-shadow-md">
-            {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : 'S'}
+            {userProfile?.name ? userProfile.name.charAt(0).toUpperCase() : 'U'}
           </span>
         </div>
       )}
@@ -223,7 +223,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Buyer Name & Status */}
                 <div className="flex items-center space-x-1">
                   <span className="text-xs font-bold text-slate-100 max-w-[85px] sm:max-w-[110px] truncate">
-                    {userProfile.isLoggedIn && userProfile.name ? userProfile.name.split(' ')[0] : 'Sairaj'}
+                    {userProfile.isLoggedIn && userProfile.name ? userProfile.name.split(' ')[0] : 'Account'}
                   </span>
                   <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isMenuOpen ? 'rotate-180 text-amber-400' : ''}`} />
                 </div>
@@ -252,12 +252,12 @@ export const Header: React.FC<HeaderProps> = ({
 
                     {/* Buyer Full Name & Role */}
                     <h3 className="text-sm font-extrabold text-white tracking-tight flex items-center justify-center space-x-1">
-                      <span>{userProfile.name || 'Sairaj • YOUR NAME'}</span>
+                      <span>{userProfile.name || (userProfile.isLoggedIn ? 'Verified Member' : 'Student Buyer / Guest')}</span>
                     </h3>
 
                     {/* Buyer Email */}
                     <p className="text-xs text-slate-300 font-medium mt-0.5">
-                      {userProfile.email || 'sairajachari04@gmail.com'}
+                      {userProfile.email || (userProfile.isLoggedIn ? 'Signed In' : 'Sign in to sync your cart & orders')}
                     </p>
 
                     {/* Buyer College / Tag */}

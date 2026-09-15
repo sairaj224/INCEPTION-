@@ -588,7 +588,7 @@ export const CartCheckoutModal: React.FC<CartCheckoutModalProps> = ({
                   required
                   value={buyerName}
                   onChange={(e) => setBuyerName(e.target.value)}
-                  placeholder="e.g. Sairaj Achari"
+                  placeholder="e.g. Alex Kumar"
                   className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-800"
                 />
               </div>
