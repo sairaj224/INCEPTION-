@@ -12,6 +12,7 @@ interface FooterProps {
   onOpenAdminInventory?: () => void;
   isAdminAuthenticated?: boolean;
   onOpenSupabaseModal?: () => void;
+  onOpenFirebaseHosting?: () => void;
   onOpenFlowchart?: () => void;
 }
 
@@ -25,6 +26,7 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenAdminInventory,
   isAdminAuthenticated,
   onOpenSupabaseModal,
+  onOpenFirebaseHosting,
   onOpenFlowchart,
 }) => {
   return (
@@ -156,6 +158,14 @@ export const Footer: React.FC<FooterProps> = ({
             <button onClick={onOpenCookieSettings} className="hover:underline">Cookies</button>
             <span>•</span>
             <button onClick={onOpenCacheSettings} className="hover:underline">Cache Settings</button>
+            {onOpenFirebaseHosting && (
+              <>
+                <span>•</span>
+                <button onClick={onOpenFirebaseHosting} className="hover:underline text-amber-400 font-bold flex items-center space-x-1">
+                  <span>Firebase Hosting & Storage</span>
+                </button>
+              </>
+            )}
             {onOpenSupabaseModal && (
               <>
                 <span>•</span>

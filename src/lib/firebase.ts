@@ -1,21 +1,62 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, getDoc, query, where, orderBy } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { Product, UserProfile, PlacedOrder, OrderStatus } from '../types';
 
 let appInstance: any = null;
 let firestoreDb: any = null;
+let firebaseStorageInstance: any = null;
 
 try {
   appInstance = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
   if (appInstance) {
     firestoreDb = getFirestore(appInstance, firebaseConfig.firestoreDatabaseId || undefined);
+    firebaseStorageInstance = getStorage(appInstance);
   }
 } catch (e) {
   console.warn('Firebase initialization notice:', e);
 }
 
 export const db = firestoreDb;
+export const storage = firebaseStorageInstance;
+
+/**
+ * Upload a file (e.g. project image, student showcase photo, invoice) to Firebase Storage
+ */
+export async function uploadFileToFirebaseStorage(
+  path: string,
+  file: Blob | Uint8Array | ArrayBuffer
+): Promise<string | null> {
+  try {
+    if (!storage) {
+      console.warn('Firebase Storage is not initialized');
+      return null;
+    }
+    const storageRef = ref(storage, path);
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadUrl = await getDownloadURL(snapshot.ref);
+    return downloadUrl;
+  } catch (err) {
+    console.error('Failed to upload file to Firebase Storage:', err);
+    return null;
+  }
+}
+
+/**
+ * Delete a file from Firebase Storage
+ */
+export async function deleteFileFromFirebaseStorage(path: string): Promise<boolean> {
+  try {
+    if (!storage) return false;
+    const storageRef = ref(storage, path);
+    await deleteObject(storageRef);
+    return true;
+  } catch (err) {
+    console.error('Failed to delete file from Firebase Storage:', err);
+    return false;
+  }
+}
 
 const PRODUCTS_COLLECTION = 'products';
 const USERS_COLLECTION = 'users';

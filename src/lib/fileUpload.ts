@@ -1,14 +1,18 @@
 import { AppLogger } from './logger';
+import { uploadFileToFirebaseStorage } from './firebase';
 
 export interface FileValidationOptions {
   maxSizeMb?: number;
   allowedMimeTypes?: string[];
   allowedExtensions?: string[];
+  uploadToFirebaseStorage?: boolean;
+  storageFolder?: string;
 }
 
 export interface ValidatedFileResult {
   success: boolean;
   dataUrl?: string;
+  storageUrl?: string;
   fileName?: string;
   fileSizeKb?: number;
   mimeType?: string;
@@ -59,14 +63,42 @@ export async function validateAndProcessFileUpload(
   // 4. Read and process image/file
   return new Promise((resolve) => {
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       const rawDataUrl = reader.result as string;
 
-      // If file is an image (and not SVG), compress it using canvas to save localStorage space
+      // Helper to attempt Firebase Storage upload if requested
+      const attemptStorageUpload = async (contentBlob: Blob | File, finalDataUrl: string, mime: string, sizeKb: number) => {
+        let storageUrl: string | undefined = undefined;
+        if (options.uploadToFirebaseStorage !== false) {
+          try {
+            const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const folder = options.storageFolder || 'uploads';
+            const storagePath = `${folder}/${Date.now()}_${cleanName}`;
+            const uploadedUrl = await uploadFileToFirebaseStorage(storagePath, contentBlob);
+            if (uploadedUrl) {
+              storageUrl = uploadedUrl;
+              AppLogger.info('FileUpload', `File uploaded to Firebase Storage at ${storagePath}`, { storageUrl });
+            }
+          } catch (storageErr) {
+            console.warn('Firebase storage upload fallback to dataUrl:', storageErr);
+          }
+        }
+
+        resolve({
+          success: true,
+          dataUrl: storageUrl || finalDataUrl,
+          storageUrl,
+          fileName: file.name,
+          fileSizeKb: sizeKb,
+          mimeType: mime,
+        });
+      };
+
+      // If file is an image (and not SVG), compress it using canvas
       if (file.type.startsWith('image/') && !file.type.includes('svg')) {
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.onload = () => {
+        img.onload = async () => {
           try {
             const canvas = document.createElement('canvas');
             const maxDim = 800; // max 800px width/height
@@ -88,41 +120,25 @@ export async function validateAndProcessFileUpload(
             const ctx = canvas.getContext('2d');
             if (ctx) {
               ctx.drawImage(img, 0, 0, width, height);
-              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.75);
-              AppLogger.info('FileUpload', `Image '${file.name}' compressed successfully.`, {
-                originalKb: (file.size / 1024).toFixed(1),
-                compressedKb: (compressedDataUrl.length / 1024).toFixed(1),
-              });
-              resolve({
-                success: true,
-                dataUrl: compressedDataUrl,
-                fileName: file.name,
-                fileSizeKb: Number((compressedDataUrl.length / 1024).toFixed(1)),
-                mimeType: 'image/jpeg',
-              });
+              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+              const compressedKb = Number((compressedDataUrl.length / 1024).toFixed(1));
+              
+              // Convert canvas to blob for storage upload
+              canvas.toBlob(async (blob) => {
+                const targetBlob = blob || file;
+                await attemptStorageUpload(targetBlob, compressedDataUrl, 'image/jpeg', compressedKb);
+              }, 'image/jpeg', 0.8);
               return;
             }
           } catch (compressErr) {
             console.warn('Image canvas compression failed, falling back to raw data URL', compressErr);
           }
           // Fallback if canvas context fails
-          resolve({
-            success: true,
-            dataUrl: rawDataUrl,
-            fileName: file.name,
-            fileSizeKb: Number((file.size / 1024).toFixed(1)),
-            mimeType: file.type,
-          });
+          await attemptStorageUpload(file, rawDataUrl, file.type, Number((file.size / 1024).toFixed(1)));
         };
 
-        img.onerror = () => {
-          resolve({
-            success: true,
-            dataUrl: rawDataUrl,
-            fileName: file.name,
-            fileSizeKb: Number((file.size / 1024).toFixed(1)),
-            mimeType: file.type,
-          });
+        img.onerror = async () => {
+          await attemptStorageUpload(file, rawDataUrl, file.type, Number((file.size / 1024).toFixed(1)));
         };
 
         img.src = rawDataUrl;
@@ -131,13 +147,7 @@ export async function validateAndProcessFileUpload(
           fileName: file.name,
           sizeKb: (file.size / 1024).toFixed(1),
         });
-        resolve({
-          success: true,
-          dataUrl: rawDataUrl,
-          fileName: file.name,
-          fileSizeKb: Number((file.size / 1024).toFixed(1)),
-          mimeType: file.type,
-        });
+        await attemptStorageUpload(file, rawDataUrl, file.type, Number((file.size / 1024).toFixed(1)));
       }
     };
 

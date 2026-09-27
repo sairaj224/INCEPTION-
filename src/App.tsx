@@ -24,6 +24,7 @@ import { CacheSettingsModal } from './components/CacheSettingsModal';
 import { SitemapModal } from './components/SitemapModal';
 import { ErrorLogModal } from './components/ErrorLogModal';
 import { SupabaseModal } from './components/SupabaseModal';
+import { FirebaseHostingModal } from './components/FirebaseHostingModal';
 import { FlowchartModal } from './components/FlowchartModal';
 import { Footer } from './components/Footer';
 import { LearningHubMain } from './components/LearningHub/LearningHubMain';
@@ -189,6 +190,7 @@ export default function App() {
   const [isSitemapOpen, setIsSitemapOpen] = useState<boolean>(false);
   const [isErrorLogOpen, setIsErrorLogOpen] = useState<boolean>(false);
   const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState<boolean>(false);
+  const [isFirebaseHostingOpen, setIsFirebaseHostingOpen] = useState<boolean>(false);
   const [isFlowchartOpen, setIsFlowchartOpen] = useState<boolean>(false);
 
   // Theme Preference State ('dark' | 'light')
@@ -1055,6 +1057,7 @@ export default function App() {
         onOpenAdminInventory={() => setIsAdminInventoryOpen(true)}
         isAdminAuthenticated={isAdminAuthenticated}
         onOpenSupabaseModal={() => setIsSupabaseModalOpen(true)}
+        onOpenFirebaseHosting={() => setIsFirebaseHostingOpen(true)}
         onOpenFlowchart={() => setIsFlowchartOpen(true)}
       />
 
@@ -1288,6 +1291,12 @@ export default function App() {
       <FlowchartModal
         isOpen={isFlowchartOpen}
         onClose={() => setIsFlowchartOpen(false)}
+      />
+
+      {/* Firebase Hosting & Cloud Storage Guide Modal */}
+      <FirebaseHostingModal
+        isOpen={isFirebaseHostingOpen}
+        onClose={() => setIsFirebaseHostingOpen(false)}
       />
 
       {/* Bottom Right Floating AI Finder Button & Speech Bubble */}
