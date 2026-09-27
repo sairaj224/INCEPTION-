@@ -69,6 +69,22 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [returnNotes, setReturnNotes] = useState<string>('');
   const [returnSuccess, setReturnSuccess] = useState<boolean>(false);
 
+  React.useEffect(() => {
+    if (userProfile) {
+      if (userProfile.name) setAuthName(userProfile.name);
+      if (userProfile.email) setAuthEmail(userProfile.email);
+      if (userProfile.phone) setAuthPhone(userProfile.phone);
+      if (userProfile.collegeName) setCollegeName(userProfile.collegeName);
+      if (userProfile.department) setDepartment(userProfile.department);
+      if (userProfile.yearOrRollNo) setYearOrRollNo(userProfile.yearOrRollNo);
+      if (userProfile.hostelAddress) setHostelAddress(userProfile.hostelAddress);
+      if (userProfile.avatarUrl) setAvatarUrl(userProfile.avatarUrl);
+      if (userProfile.savedAddresses && userProfile.savedAddresses.length > 0) {
+        setSavedAddressesList(userProfile.savedAddresses);
+      }
+    }
+  }, [userProfile]);
+
   const handleAddAddress = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAddrLabel.trim() || !newAddrText.trim()) return;

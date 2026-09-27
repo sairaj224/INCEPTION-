@@ -285,6 +285,33 @@ export default function App() {
     };
   }, []);
 
+  // Auto-sync current user profile to Firestore database if already logged in or contains profile info
+  useEffect(() => {
+    if (userProfile && (userProfile.isLoggedIn || userProfile.email || userProfile.phone || userProfile.id)) {
+      saveUserToFirestore(userProfile);
+    }
+  }, [userProfile]);
+
+  const handleBuyerLogout = () => {
+    const emptyProfile: UserProfile = {
+      id: '',
+      name: '',
+      email: '',
+      phone: '',
+      collegeName: '',
+      department: '',
+      yearOrRollNo: '',
+      hostelAddress: '',
+      isLoggedIn: false,
+    };
+    setUserProfile(emptyProfile);
+    try {
+      localStorage.removeItem(PROFILE_STORAGE_KEY);
+    } catch (e) {
+      console.error('Failed to clear profile', e);
+    }
+  };
+
   // Real-time sync for orders from Firestore based on logged-in user or store owner role
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -815,6 +842,7 @@ export default function App() {
             }
           }}
           onOpenBuyerLogin={handleOpenBuyerLogin}
+          onBuyerLogout={handleBuyerLogout}
           isAdminAuthenticated={isAdminAuthenticated}
           onOpenAdminLogin={handleOpenAdminLogin}
           onAdminLogout={handleAdminLogout}
@@ -851,20 +879,39 @@ export default function App() {
             </div>
           </div>
         ) : userProfile.isLoggedIn ? (
-          <div className="bg-blue-600/10 border-b border-blue-500/20 px-4 py-2 flex items-center justify-between text-xs text-blue-300 font-medium">
+          <div className="bg-blue-600/10 border-b border-blue-500/20 px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-blue-300 font-medium">
             <div className="flex items-center space-x-2">
               <User className="w-4 h-4 text-blue-400 shrink-0" />
               <span>
-                Campus Buyer Account: <strong>{userProfile.name}</strong> ({userProfile.collegeName}) — <strong>10% Student Discount Active</strong>
+                Campus Buyer Account: <strong>{userProfile.name || userProfile.email || 'Student Buyer'}</strong> ({userProfile.email || userProfile.collegeName || 'Student'})
+              </span>
+              <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                ✓ Synced to Firestore
               </span>
             </div>
-            <button
-              onClick={() => setIsProfileOpen(true)}
-              className="text-blue-400 hover:underline text-[11px] font-bold flex items-center gap-1"
-            >
-              <span>View Buyer Profile & Orders</span>
-              <span>→</span>
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setIsProfileOpen(true)}
+                className="text-blue-400 hover:underline text-[11px] font-bold flex items-center gap-1"
+              >
+                <span>Profile & Orders</span>
+                <span>→</span>
+              </button>
+              <button
+                onClick={() => handleOpenBuyerLogin("Switch buyer account or log in with your email / OTP")}
+                className="px-2 py-0.5 rounded bg-blue-600/30 hover:bg-blue-600/50 text-blue-200 border border-blue-500/40 text-[11px] font-bold transition-all"
+                title="Log in with a different email or phone"
+              >
+                Switch Account
+              </button>
+              <button
+                onClick={handleBuyerLogout}
+                className="px-2 py-0.5 rounded bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-300 border border-slate-700 hover:border-rose-800 text-[11px] font-bold transition-all"
+                title="Log out from this device"
+              >
+                Log Out
+              </button>
+            </div>
           </div>
         ) : null}
 

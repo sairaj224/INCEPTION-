@@ -66,14 +66,17 @@ const ORDERS_COLLECTION = 'orders';
 
 export async function saveUserToFirestore(user: UserProfile) {
   try {
-    if (!db || !user.email) return;
-    const userDocId = user.id || `usr-${user.email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    if (!db) return;
+    const identifier = user.email || user.phone || user.id;
+    if (!identifier && !user.name) return;
+    const userDocId = user.id || `usr-${(identifier || user.name || 'user').toLowerCase().replace(/[^a-zA-Z0-9]/g, '_')}`;
     const docRef = doc(db, USERS_COLLECTION, userDocId);
     await setDoc(docRef, {
       ...user,
       id: userDocId,
       updatedAt: new Date().toISOString(),
     }, { merge: true });
+    console.log('[Firestore] User profile persisted to users collection:', userDocId);
   } catch (err) {
     console.error('Error saving user profile to Firestore:', err);
   }

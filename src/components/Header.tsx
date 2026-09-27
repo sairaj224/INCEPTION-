@@ -60,6 +60,7 @@ interface HeaderProps {
   userProfile: UserProfile;
   onOpenProfile: () => void;
   onOpenBuyerLogin?: (msg?: string) => void;
+  onBuyerLogout?: () => void;
   isAdminAuthenticated?: boolean;
   onOpenAdminLogin?: (msg?: string) => void;
   onAdminLogout?: () => void;
@@ -85,6 +86,7 @@ export const Header: React.FC<HeaderProps> = ({
   userProfile,
   onOpenProfile,
   onOpenBuyerLogin,
+  onBuyerLogout,
   isAdminAuthenticated = false,
   onOpenAdminLogin,
   onAdminLogout,
@@ -273,7 +275,7 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
 
                     {/* Profile Actions */}
-                    <div className="w-full mt-3 pt-2.5 border-t border-slate-700/60 flex items-center justify-between">
+                    <div className="w-full mt-3 pt-2.5 border-t border-slate-700/60 flex items-center justify-between gap-1.5">
                       {userProfile.isLoggedIn ? (
                         <>
                           <button
@@ -284,17 +286,32 @@ export const Header: React.FC<HeaderProps> = ({
                             className="text-xs font-bold text-blue-400 hover:text-blue-300 flex items-center space-x-1"
                           >
                             <User className="w-3.5 h-3.5" />
-                            <span>Edit Profile & Addresses</span>
+                            <span>My Profile</span>
                           </button>
-                          <button
-                            onClick={() => {
-                              if (onOpenBuyerLogin) onOpenBuyerLogin("Switch buyer account or update your details.");
-                              setIsMenuOpen(false);
-                            }}
-                            className="text-[11px] font-semibold text-slate-400 hover:text-slate-200"
-                          >
-                            Switch
-                          </button>
+                          <div className="flex items-center space-x-1.5">
+                            <button
+                              onClick={() => {
+                                if (onOpenBuyerLogin) onOpenBuyerLogin("Switch buyer account or update your details.");
+                                setIsMenuOpen(false);
+                              }}
+                              className="text-[11px] font-semibold text-slate-300 hover:text-white px-2 py-0.5 rounded bg-slate-700/70 hover:bg-slate-700 transition-colors"
+                              title="Sign in with another email or student ID"
+                            >
+                              Switch
+                            </button>
+                            {onBuyerLogout && (
+                              <button
+                                onClick={() => {
+                                  onBuyerLogout();
+                                  setIsMenuOpen(false);
+                                }}
+                                className="text-[11px] font-semibold text-rose-300 hover:text-rose-200 px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/30 transition-colors"
+                                title="Log out from this device"
+                              >
+                                Logout
+                              </button>
+                            )}
+                          </div>
                         </>
                       ) : (
                         <button
