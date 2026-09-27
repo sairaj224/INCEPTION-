@@ -404,6 +404,22 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
       }
 
       if (otpPurpose === 'register' || !res.user?.hostelAddress) {
+        // Create an initial user record in Firestore immediately
+        const initialProfile: UserProfile = {
+          id: `usr-${targetIdentifier.replace(/[^a-zA-Z0-9]/g, '_')}`,
+          name: fullName.trim() || targetIdentifier.split('@')[0] || 'Student Buyer',
+          email: targetIdentifier.includes('@') ? targetIdentifier.toLowerCase() : '',
+          phone: !targetIdentifier.includes('@') ? targetIdentifier : '',
+          emailVerified: true,
+          collegeName: 'College Campus',
+          department: 'Engineering Dept',
+          yearOrRollNo: 'Student',
+          hostelAddress: '',
+          isLoggedIn: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        saveUserToFirestore(initialProfile);
         // Route to address / college delivery details setup
         setStep('ADDRESS_SETUP');
         setIsLoading(false);
@@ -412,12 +428,29 @@ export const AmazonFlipkartAuthModal: React.FC<AmazonFlipkartAuthModalProps> = (
 
       // Existing verified user
       if (res.user) {
+        saveUserToFirestore(res.user);
         onLoginSuccess({
           ...res.user,
           isLoggedIn: true,
         });
         onClose();
       } else {
+        // Create an initial user record in Firestore immediately
+        const initialProfile: UserProfile = {
+          id: `usr-${targetIdentifier.replace(/[^a-zA-Z0-9]/g, '_')}`,
+          name: fullName.trim() || targetIdentifier.split('@')[0] || 'Student Buyer',
+          email: targetIdentifier.includes('@') ? targetIdentifier.toLowerCase() : '',
+          phone: !targetIdentifier.includes('@') ? targetIdentifier : '',
+          emailVerified: true,
+          collegeName: 'College Campus',
+          department: 'Engineering Dept',
+          yearOrRollNo: 'Student',
+          hostelAddress: '',
+          isLoggedIn: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        saveUserToFirestore(initialProfile);
         setStep('ADDRESS_SETUP');
       }
     } catch (err) {

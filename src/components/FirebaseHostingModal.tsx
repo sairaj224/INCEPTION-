@@ -132,9 +132,9 @@ export const FirebaseHostingModal: React.FC<FirebaseHostingModalProps> = ({
               {/* Step 3 */}
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-amber-400">Step 3: Deploy Hosting & Storage Rules</span>
+                  <span className="font-bold text-amber-400">Step 3: Deploy Hosting & Firestore Rules</span>
                   <button
-                    onClick={() => copyToClipboard(`firebase deploy --only hosting,storage,firestore`, 'step3')}
+                    onClick={() => copyToClipboard(`firebase deploy --only hosting,firestore:rules`, 'step3')}
                     className="flex items-center space-x-1 text-slate-400 hover:text-white px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-[10px]"
                   >
                     {copiedCmd === 'step3' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
@@ -142,10 +142,10 @@ export const FirebaseHostingModal: React.FC<FirebaseHostingModalProps> = ({
                   </button>
                 </div>
                 <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl font-mono text-[11px] text-emerald-300 font-bold">
-                  firebase deploy --only hosting,storage,firestore
+                  firebase deploy --only hosting,firestore:rules
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  This deploys your static files to Firebase global CDN, activates <code className="text-amber-300">storage.rules</code> on Cloud Storage, and syncs Firestore database rules.
+                  100% Free Spark tier command! This deploys your static files to Firebase global CDN and syncs Firestore database security rules without requiring billing.
                 </p>
               </div>
             </div>

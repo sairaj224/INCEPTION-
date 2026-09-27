@@ -31,7 +31,7 @@ import { LearningHubMain } from './components/LearningHub/LearningHubMain';
 import { CookiePreferences } from './types';
 import { AppLogger } from './lib/logger';
 import { createSlug, updateProductSchemaJsonLd } from './lib/seo';
-import { subscribeToProducts, syncAllProductsToFirestore, seedProductsToFirestoreIfEmpty, subscribeToUserOrders, subscribeToAllOrders } from './lib/firebase';
+import { subscribeToProducts, syncAllProductsToFirestore, seedProductsToFirestoreIfEmpty, subscribeToUserOrders, subscribeToAllOrders, saveUserToFirestore, subscribeToAllUsers } from './lib/firebase';
 import { isSupabaseConfigured, fetchSupabaseProducts, fetchSupabaseProjects, saveSupabaseProduct, saveSupabaseProject, createSupabaseOrder, saveSupabaseUserProfile } from './lib/supabase';
 import { Search, Sparkles, Filter, IndianRupee, Cpu, ShieldAlert, User, LogIn, UserCheck, Database } from 'lucide-react';
 
@@ -267,6 +267,21 @@ export default function App() {
       if (typeof unsubscribe === 'function') {
         unsubscribe();
       }
+    };
+  }, []);
+
+  // Dynamic Registered Users state synchronized with Firestore
+  const [allRegisteredUsers, setAllRegisteredUsers] = useState<UserProfile[]>([]);
+
+  // Real-time sync for registered users from Firestore
+  useEffect(() => {
+    const unsub = subscribeToAllUsers((usersList) => {
+      if (usersList) {
+        setAllRegisteredUsers(usersList);
+      }
+    });
+    return () => {
+      if (typeof unsub === 'function') unsub();
     };
   }, []);
 
@@ -526,6 +541,9 @@ export default function App() {
   // Helper to persist profile
   const handleUpdateProfile = (updatedProfile: UserProfile) => {
     setUserProfile(updatedProfile);
+    if (updatedProfile.email || updatedProfile.id) {
+      saveUserToFirestore(updatedProfile);
+    }
     if (isSupabaseConfigured()) {
       saveSupabaseUserProfile(updatedProfile);
     }
@@ -558,6 +576,7 @@ export default function App() {
   const handlePlaceOrder = (newOrder: PlacedOrder) => {
     const updated = [newOrder, ...orders];
     updateAndPersistOrders(updated);
+    saveOrderToFirestore(newOrder);
     if (isSupabaseConfigured()) {
       createSupabaseOrder({
         id: newOrder.orderId,
@@ -1231,6 +1250,7 @@ export default function App() {
         onDeleteProduct={handleDeleteProduct}
         onResetProducts={handleResetProducts}
         orders={orders}
+        registeredUsers={allRegisteredUsers}
         onUpdateOrderStatus={handleUpdateOrderStatus}
         onDeleteOrder={handleDeleteOrder}
         onAdminLogout={handleAdminLogout}

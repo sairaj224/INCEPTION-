@@ -67,6 +67,7 @@ interface AdminInventoryModalProps {
   onDeleteProduct: (prodId: string) => void;
   onResetProducts: () => void;
   orders: PlacedOrder[];
+  registeredUsers?: UserProfile[];
   onUpdateOrderStatus: (orderId: string, newStatus: OrderStatus, notes?: string) => void;
   onDeleteOrder: (orderId: string) => void;
   onAdminLogout?: () => void;
@@ -220,6 +221,7 @@ export const AdminInventoryModal: React.FC<AdminInventoryModalProps> = ({
   onDeleteProduct,
   onResetProducts,
   orders = [],
+  registeredUsers = [],
   onUpdateOrderStatus,
   onDeleteOrder,
   onAdminLogout,
@@ -426,6 +428,23 @@ export const AdminInventoryModal: React.FC<AdminInventoryModalProps> = ({
         totalOrders: 1,
         totalSpent: o.status !== 'Cancelled' ? o.grandTotal : 0,
         lastOrderDate: o.createdAt,
+      });
+    }
+  });
+
+  // Merge registered users from Firestore database
+  registeredUsers.forEach((u) => {
+    const key = u.phone || u.email || u.name;
+    if (key && !customerMap.has(key)) {
+      customerMap.set(key, {
+        name: u.name || 'Student Buyer',
+        email: u.email || '',
+        phone: u.phone || '',
+        collegeName: u.collegeName || 'Campus Student',
+        department: u.department || 'Engineering',
+        totalOrders: 0,
+        totalSpent: 0,
+        lastOrderDate: u.createdAt || new Date().toISOString(),
       });
     }
   });

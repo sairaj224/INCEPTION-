@@ -98,6 +98,29 @@ export async function getUserFromFirestore(emailOrId: string): Promise<UserProfi
   return null;
 }
 
+export function subscribeToAllUsers(onUpdate: (users: UserProfile[]) => void) {
+  try {
+    if (!db) return () => {};
+    const colRef = collection(db, USERS_COLLECTION);
+    return onSnapshot(
+      colRef,
+      (snapshot) => {
+        const list: UserProfile[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push({ ...docSnap.data(), id: docSnap.id } as UserProfile);
+        });
+        onUpdate(list);
+      },
+      (err) => {
+        console.warn('Firestore all users subscription error:', err);
+      }
+    );
+  } catch (e) {
+    console.warn('Failed to attach all users listener:', e);
+    return () => {};
+  }
+}
+
 // ================= ORDERS PERSISTENCE ================= //
 
 export async function saveOrderToFirestore(order: PlacedOrder) {
