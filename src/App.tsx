@@ -31,7 +31,7 @@ import { LearningHubMain } from './components/LearningHub/LearningHubMain';
 import { CookiePreferences } from './types';
 import { AppLogger } from './lib/logger';
 import { createSlug, updateProductSchemaJsonLd } from './lib/seo';
-import { subscribeToProducts, syncAllProductsToFirestore, seedProductsToFirestoreIfEmpty, subscribeToUserOrders, subscribeToAllOrders, saveUserToFirestore, subscribeToAllUsers } from './lib/firebase';
+import { subscribeToProducts, syncAllProductsToFirestore, seedProductsToFirestoreIfEmpty, subscribeToUserOrders, subscribeToAllOrders, saveUserToFirestore, subscribeToAllUsers, checkAndCompleteEmailSignIn } from './lib/firebase';
 import { isSupabaseConfigured, fetchSupabaseProducts, fetchSupabaseProjects, saveSupabaseProduct, saveSupabaseProject, createSupabaseOrder, saveSupabaseUserProfile } from './lib/supabase';
 import { Search, Sparkles, Filter, IndianRupee, Cpu, ShieldAlert, User, LogIn, UserCheck, Database } from 'lucide-react';
 
@@ -105,7 +105,16 @@ export default function App() {
       const saved = localStorage.getItem(PROFILE_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed && parsed.name && parsed.isLoggedIn) return parsed;
+        if (parsed && (parsed.email || (parsed.name && parsed.name !== 'Guest Visitor'))) {
+          const loaded: UserProfile = {
+            ...parsed,
+            isLoggedIn: true,
+          };
+          try {
+            localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(loaded));
+          } catch (e) {}
+          return loaded;
+        }
       }
     } catch (e) {
       console.error('Failed to load saved profile', e);
@@ -285,12 +294,30 @@ export default function App() {
     };
   }, []);
 
+  // Check if returning from a Firebase email sign-in link
+  useEffect(() => {
+    checkAndCompleteEmailSignIn().then((signedInProfile) => {
+      if (signedInProfile) {
+        handleUpdateProfile(signedInProfile);
+      }
+    }).catch((err) => console.warn('Email sign in link check notice:', err));
+  }, []);
+
   // Auto-sync current user profile to Firestore database if already logged in or contains profile info
   useEffect(() => {
-    if (userProfile && (userProfile.isLoggedIn || userProfile.email || userProfile.phone || userProfile.id)) {
-      saveUserToFirestore(userProfile);
+    if (userProfile && (userProfile.email || userProfile.phone || userProfile.id)) {
+      if (!userProfile.isLoggedIn) {
+        const active: UserProfile = { ...userProfile, isLoggedIn: true };
+        setUserProfile(active);
+        try {
+          localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(active));
+        } catch (e) {}
+        saveUserToFirestore(active);
+      } else {
+        saveUserToFirestore(userProfile);
+      }
     }
-  }, [userProfile]);
+  }, [userProfile.email, userProfile.phone, userProfile.id, userProfile.isLoggedIn]);
 
   const handleBuyerLogout = () => {
     const emptyProfile: UserProfile = {
@@ -567,14 +594,19 @@ export default function App() {
 
   // Helper to persist profile
   const handleUpdateProfile = (updatedProfile: UserProfile) => {
-    setUserProfile(updatedProfile);
-    if (updatedProfile.email || updatedProfile.id) {
-      saveUserToFirestore(updatedProfile);
+    const isExplicitLogout = updatedProfile.isLoggedIn === false;
+    const finalProfile: UserProfile = {
+      ...updatedProfile,
+      isLoggedIn: isExplicitLogout ? false : Boolean(updatedProfile.isLoggedIn || updatedProfile.email || updatedProfile.name),
+    };
+    setUserProfile(finalProfile);
+    if (finalProfile.email || finalProfile.id) {
+      saveUserToFirestore(finalProfile);
     }
     if (isSupabaseConfigured()) {
-      saveSupabaseUserProfile(updatedProfile);
+      saveSupabaseUserProfile(finalProfile);
     }
-    if (updatedProfile.isLoggedIn) {
+    if (finalProfile.isLoggedIn) {
       setUserRole('student');
       setIsAdminAuthenticated(false);
       try {
@@ -582,11 +614,15 @@ export default function App() {
       } catch (e) {
         console.error(e);
       }
-    }
-    try {
-      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(updatedProfile));
-    } catch (e) {
-      console.error('Failed to save profile', e);
+      try {
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(finalProfile));
+      } catch (e) {
+        console.error('Failed to save profile', e);
+      }
+    } else {
+      try {
+        localStorage.removeItem(PROFILE_STORAGE_KEY);
+      } catch (e) {}
     }
   };
 
@@ -878,7 +914,7 @@ export default function App() {
               </button>
             </div>
           </div>
-        ) : userProfile.isLoggedIn ? (
+        ) : (userProfile.isLoggedIn || userProfile.email) ? (
           <div className="bg-blue-600/10 border-b border-blue-500/20 px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-xs text-blue-300 font-medium">
             <div className="flex items-center space-x-2">
               <User className="w-4 h-4 text-blue-400 shrink-0" />

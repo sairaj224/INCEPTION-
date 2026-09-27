@@ -1,18 +1,29 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, getDoc, query, where, orderBy } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  sendSignInLinkToEmail, 
+  isSignInWithEmailLink, 
+  signInWithEmailLink,
+  signOut as firebaseSignOut
+} from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { Product, UserProfile, PlacedOrder, OrderStatus } from '../types';
 
 let appInstance: any = null;
 let firestoreDb: any = null;
 let firebaseStorageInstance: any = null;
+let firebaseAuthInstance: any = null;
 
 try {
   appInstance = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
   if (appInstance) {
     firestoreDb = getFirestore(appInstance, firebaseConfig.firestoreDatabaseId || undefined);
     firebaseStorageInstance = getStorage(appInstance);
+    firebaseAuthInstance = getAuth(appInstance);
   }
 } catch (e) {
   console.warn('Firebase initialization notice:', e);
@@ -20,6 +31,107 @@ try {
 
 export const db = firestoreDb;
 export const storage = firebaseStorageInstance;
+export const auth = firebaseAuthInstance;
+
+/**
+ * 1-Click Google Sign-In via Firebase Auth
+ */
+export async function signInWithGoogle(): Promise<UserProfile | null> {
+  try {
+    if (!auth) throw new Error('Firebase Authentication is not initialized');
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const result = await signInWithPopup(auth, provider);
+    const fbUser = result.user;
+    if (!fbUser) return null;
+
+    const email = (fbUser.email || '').toLowerCase().trim();
+    const cleanId = `usr-${email.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const userProfile: UserProfile = {
+      id: cleanId,
+      name: fbUser.displayName || email.split('@')[0] || 'Student Buyer',
+      email: email,
+      phone: fbUser.phoneNumber || '',
+      collegeName: 'IIT Bombay',
+      department: 'Electronics & Electrical Engg',
+      yearOrRollNo: 'Student',
+      hostelAddress: '',
+      isLoggedIn: true,
+      emailVerified: fbUser.emailVerified,
+      avatarUrl: fbUser.photoURL || undefined,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await saveUserToFirestore(userProfile);
+    return userProfile;
+  } catch (err) {
+    console.error('Firebase Google Sign-In error:', err);
+    throw err;
+  }
+}
+
+/**
+ * Send Sign-In Link / Verification Email directly via Firebase Auth
+ */
+export async function sendEmailSignInLink(email: string): Promise<boolean> {
+  try {
+    if (!auth || !email) return false;
+    const actionCodeSettings = {
+      url: window.location.origin,
+      handleCodeInApp: true,
+    };
+    await sendSignInLinkToEmail(auth, email.trim().toLowerCase(), actionCodeSettings);
+    try {
+      localStorage.setItem('emailForSignIn', email.trim().toLowerCase());
+    } catch (e) {}
+    console.log('[Firebase Auth] Verification email dispatched to:', email);
+    return true;
+  } catch (err) {
+    console.warn('[Firebase Auth] sendSignInLinkToEmail notice:', err);
+    return false;
+  }
+}
+
+/**
+ * Complete sign in if returning from Firebase email link
+ */
+export async function checkAndCompleteEmailSignIn(): Promise<UserProfile | null> {
+  try {
+    if (!auth) return null;
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      let email = localStorage.getItem('emailForSignIn');
+      if (!email) {
+        email = window.prompt('Please confirm your email address to complete sign in:');
+      }
+      if (email) {
+        const result = await signInWithEmailLink(auth, email, window.location.href);
+        const fbUser = result.user;
+        const cleanId = `usr-${email.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_')}`;
+        const userProfile: UserProfile = {
+          id: cleanId,
+          name: fbUser.displayName || email.split('@')[0] || 'sai',
+          email: email.toLowerCase().trim(),
+          phone: fbUser.phoneNumber || '',
+          collegeName: 'IIT Bombay',
+          department: 'Electronics & Electrical Engg',
+          yearOrRollNo: 'Student',
+          hostelAddress: '',
+          isLoggedIn: true,
+          emailVerified: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        await saveUserToFirestore(userProfile);
+        try { localStorage.removeItem('emailForSignIn'); } catch (e) {}
+        return userProfile;
+      }
+    }
+  } catch (err) {
+    console.warn('Error completing email link sign in:', err);
+  }
+  return null;
+}
 
 /**
  * Upload a file (e.g. project image, student showcase photo, invoice) to Firebase Storage

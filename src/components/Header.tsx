@@ -99,6 +99,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const isUserLoggedIn = Boolean(userProfile?.isLoggedIn || (userProfile?.email && userProfile.email.includes('@')));
 
   // Close lines menu when clicking outside
   useEffect(() => {
@@ -225,7 +226,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {/* Buyer Name & Status */}
                 <div className="flex items-center space-x-1">
                   <span className="text-xs font-bold text-slate-100 max-w-[85px] sm:max-w-[110px] truncate">
-                    {userProfile.isLoggedIn && userProfile.name ? userProfile.name.split(' ')[0] : 'Account'}
+                    {isUserLoggedIn && userProfile.name ? userProfile.name.split(' ')[0] : (isUserLoggedIn && userProfile.email ? userProfile.email.split('@')[0] : 'Account')}
                   </span>
                   <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isMenuOpen ? 'rotate-180 text-amber-400' : ''}`} />
                 </div>
@@ -245,7 +246,7 @@ export const Header: React.FC<HeaderProps> = ({
                     {/* Big Circular Pin Hole Picture */}
                     <div className="relative mb-2">
                       <UserPinAvatar userProfile={userProfile} size="lg" className="border-2 border-amber-400 shadow-lg" />
-                      {userProfile.isLoggedIn && (
+                      {isUserLoggedIn && (
                         <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 border-2 border-slate-900 flex items-center justify-center">
                           <CheckCircle2 className="w-3 h-3 text-white" />
                         </div>
@@ -254,12 +255,12 @@ export const Header: React.FC<HeaderProps> = ({
 
                     {/* Buyer Full Name & Role */}
                     <h3 className="text-sm font-extrabold text-white tracking-tight flex items-center justify-center space-x-1">
-                      <span>{userProfile.name || (userProfile.isLoggedIn ? 'Verified Member' : 'Student Buyer / Guest')}</span>
+                      <span>{userProfile.name || (isUserLoggedIn ? 'Verified Student Member' : 'Student Buyer / Guest')}</span>
                     </h3>
 
                     {/* Buyer Email */}
                     <p className="text-xs text-slate-300 font-medium mt-0.5">
-                      {userProfile.email || (userProfile.isLoggedIn ? 'Signed In' : 'Sign in to sync your cart & orders')}
+                      {userProfile.email || (isUserLoggedIn ? 'Signed In' : 'Sign in to sync your cart & orders')}
                     </p>
 
                     {/* Buyer College / Tag */}
@@ -276,7 +277,7 @@ export const Header: React.FC<HeaderProps> = ({
 
                     {/* Profile Actions */}
                     <div className="w-full mt-3 pt-2.5 border-t border-slate-700/60 flex items-center justify-between gap-1.5">
-                      {userProfile.isLoggedIn ? (
+                      {isUserLoggedIn ? (
                         <>
                           <button
                             onClick={() => {
